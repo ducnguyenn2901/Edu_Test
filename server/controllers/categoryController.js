@@ -1,0 +1,60 @@
+const Category = require('../models/Category');
+
+const getCategories = async (req, res) => {
+  try {
+    const categories = await Category.find().sort({ createdAt: -1 });
+    res.json(categories);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+const createCategory = async (req, res) => {
+  try {
+    const category = await Category.create({
+      ...req.body,
+      createdBy: req.user?._id,
+    });
+    res.status(201).json(category);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+const updateCategory = async (req, res) => {
+  try {
+    const updated = await Category.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+    });
+
+    if (!updated) {
+      return res.status(404).json({ message: 'Không tìm thấy danh mục' });
+    }
+
+    res.json(updated);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+const deleteCategory = async (req, res) => {
+  try {
+    const category = await Category.findByIdAndDelete(req.params.id);
+
+    if (!category) {
+      return res.status(404).json({ message: 'Không tìm thấy danh mục' });
+    }
+
+    res.json({ message: 'Đã xóa danh mục' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+module.exports = {
+  getCategories,
+  createCategory,
+  updateCategory,
+  deleteCategory,
+};
+
