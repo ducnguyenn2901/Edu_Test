@@ -4,8 +4,8 @@ const mammoth = require('mammoth');
 
 exports.getQuestions = async (req, res) => {
   try {
-    const { search, type, difficulty, subject, grade, category, needsReview } = req.query;
-    const filter = {};
+    const { search, type, difficulty, subject, grade, category, needsReview, source } = req.query;
+    const filter = { isInQuestionBank: true }; // Only get questions in the bank
 
     if (search) {
       filter.content = { $regex: search, $options: 'i' };
@@ -30,12 +30,19 @@ exports.getQuestions = async (req, res) => {
     }
 
     if (req.user?.role === 'teacher') {
-      filter.author = req.user.name;
+      if (source === 'common') {
+        // Common bank: public questions from all teachers
+        filter.isPublic = true;
+      } else if (source === 'all') {
+        // All questions (mine + public)
+        filter.$or = [{ author: req.user.name }, { isPublic: true }];
+      } else {
+        // Default: only my questions
+        filter.author = req.user.name;
+      }
     }
 
-    const questions = await Question.find(filter)
-      .populate('category')
-      .sort({ createdAt: -1 });
+    const questions = await Question.find(filter).populate('category').sort({ createdAt: -1 });
     res.json(questions);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -58,31 +65,39 @@ exports.getQuestionById = async (req, res) => {
 exports.createQuestion = async (req, res) => {
   try {
     const authorName = req.user?.name || 'Unknown';
+    const authorId = req.user?._id;
     const payload = req.body;
 
     const validateAndNormalize = (q) => {
       const content = (q.content || '').trim();
+      const contentImage = q.contentImage;
       const subject = q.subject;
       const grade = q.grade;
-      if (!content) {
-        return { error: 'Nội dung câu hỏi không được để trống' };
+      // Allow either content or contentImage
+      if (!content && !contentImage) {
+        return { error: 'Nội dung câu hỏi hoặc hình ảnh câu hỏi không được để trống' };
       }
       if (!subject || !grade) {
         return { error: 'Môn học và khối lớp là bắt buộc' };
       }
-      const answers = Array.isArray(q.answers) ? q.answers.map((a, idx) => ({
-        id: a.id || String.fromCharCode(65 + idx),
-        content: a.content,
-        isCorrect: !!a.isCorrect,
-      })) : undefined;
-      if (answers && answers.length > 0 && !answers.some(a => a.isCorrect)) {
+      const answers = Array.isArray(q.answers)
+        ? q.answers.map((a, idx) => ({
+            id: a.id || String.fromCharCode(65 + idx),
+            content: a.content,
+            contentImage: a.contentImage,
+            isCorrect: !!a.isCorrect,
+          }))
+        : undefined;
+      if (answers && answers.length > 0 && !answers.some((a) => a.isCorrect)) {
         answers[0].isCorrect = true;
       }
       return {
         data: {
           ...q,
           content,
+          contentImage,
           author: authorName,
+          authorId,
           answers,
         },
       };
@@ -101,7 +116,12 @@ exports.createQuestion = async (req, res) => {
           errors.push(`Dòng ${i + 1}: ${error}`);
           continue;
         }
-        const dup = await Question.findOne({ content: data.content, subject: data.subject, grade: data.grade });
+        const dup = await Question.findOne({
+          content: data.content,
+          contentImage: data.contentImage,
+          subject: data.subject,
+          grade: data.grade,
+        });
         if (dup) {
           errors.push(`Dòng ${i + 1}: Câu hỏi đã tồn tại`);
           continue;
@@ -125,7 +145,12 @@ exports.createQuestion = async (req, res) => {
       if (error) {
         return res.status(400).json({ message: error });
       }
-      const duplicate = await Question.findOne({ content: data.content, subject: data.subject, grade: data.grade });
+      const duplicate = await Question.findOne({
+        content: data.content,
+        contentImage: data.contentImage,
+        subject: data.subject,
+        grade: data.grade,
+      });
       if (duplicate) {
         return res.status(400).json({ message: 'Câu hỏi này đã tồn tại trong hệ thống' });
       }
@@ -150,11 +175,9 @@ exports.updateQuestion = async (req, res) => {
       return res.status(403).json({ message: 'Bạn chỉ được sửa câu hỏi của mình' });
     }
 
-    const updatedQuestion = await Question.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true },
-    );
+    const updatedQuestion = await Question.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+    });
     if (!updatedQuestion) return res.status(404).json({ message: 'Question not found' });
     res.json(updatedQuestion);
   } catch (err) {
@@ -176,6 +199,38 @@ exports.deleteQuestion = async (req, res) => {
   }
 };
 
+exports.deleteBulkQuestions = async (req, res) => {
+  try {
+    const { ids } = req.body;
+    
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ message: 'Danh sách ID không hợp lệ' });
+    }
+
+    // Check authorization for each question
+    const questions = await Question.find({ _id: { $in: ids } });
+    
+    if (req.user?.role === 'teacher') {
+      const unauthorizedIds = questions.filter(q => q.author !== req.user.name).map(q => q._id);
+      if (unauthorizedIds.length > 0) {
+        return res.status(403).json({ 
+          message: 'Bạn chỉ được xóa câu hỏi của mình',
+          unauthorizedCount: unauthorizedIds.length
+        });
+      }
+    }
+
+    const result = await Question.deleteMany({ _id: { $in: ids } });
+    
+    res.json({ 
+      message: `Đã xóa ${result.deletedCount} câu hỏi thành công`,
+      deletedCount: result.deletedCount
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
 exports.exportQuestions = async (req, res) => {
   try {
     const filter = {};
@@ -183,38 +238,44 @@ exports.exportQuestions = async (req, res) => {
       filter.author = req.user.name;
     }
     const questions = await Question.find(filter).populate('category').lean();
-    
-    const data = questions.map(q => {
+
+    const data = questions.map((q) => {
       const answers = Array.isArray(q.answers) ? q.answers : [];
       const answerMap = {};
       answers.forEach((a, idx) => {
         const id = a.id || String.fromCharCode(65 + idx);
         answerMap[id] = a.content || '';
       });
-      const correctIds = answers.filter(a => a.isCorrect).map(a => a.id).filter(Boolean);
+      const correctIds = answers
+        .filter((a) => a.isCorrect)
+        .map((a) => a.id)
+        .filter(Boolean);
       return {
         'Nội dung': q.content,
-        'Loại': q.type,
+        Loại: q.type,
         'Độ khó': q.difficulty,
         'Môn học': q.subject,
-        'Khối': q.grade,
+        Khối: q.grade,
         'Danh mục': q.category ? q.category.name : '',
-        'A': answerMap['A'] || '',
-        'B': answerMap['B'] || '',
-        'C': answerMap['C'] || '',
-        'D': answerMap['D'] || '',
-        'Đúng': correctIds.join(','),
+        A: answerMap['A'] || '',
+        B: answerMap['B'] || '',
+        C: answerMap['C'] || '',
+        D: answerMap['D'] || '',
+        Đúng: correctIds.join(','),
       };
     });
 
     const wb = XLSX.utils.book_new();
     const ws = XLSX.utils.json_to_sheet(data);
     XLSX.utils.book_append_sheet(wb, ws, 'Questions');
-    
+
     const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
-    
+
     res.setHeader('Content-Disposition', 'attachment; filename="Questions.xlsx"');
-    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    );
     res.send(buf);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -235,51 +296,59 @@ exports.importQuestions = async (req, res) => {
       // Logic for Word file
       const result = await mammoth.extractRawText({ buffer: req.file.buffer });
       const text = result.value;
-      
-      const questionBlocks = text.split(/(?=Câu\s*\d+|^\d+[\.\):]\s+)/m).filter(b => b.trim());
-      
+
+      const questionBlocks = text.split(/(?=Câu\s*\d+|^\d+[\.\):]\s+)/m).filter((b) => b.trim());
+
       for (let i = 0; i < questionBlocks.length; i++) {
         const block = questionBlocks[i].trim();
-        const lines = block.split('\n').map(l => l.trim()).filter(Boolean);
-        
-        if (lines.length < 2) continue;
+        const lines = block
+          .split('\n')
+          .map((l) => l.trim())
+          .filter(Boolean);
 
-        // Extract question content 
+        if (lines.length < 1) continue;
+
+        // Extract question content
         let questionContent = lines[0].replace(/^(Câu\s*\d+[:\.]?|^\d+[\.\):])\s*/i, '').trim();
-        
+
         const answers = [];
         const answerPattern = /^([A-D])[\.\):]\s*(.*)/i;
-        
+
         for (let j = 1; j < lines.length; j++) {
           const match = lines[j].match(answerPattern);
           if (match) {
             const label = match[1].toUpperCase();
             let content = match[2].trim();
             let isCorrect = false;
-            
+
             // Check if answer has asterisk or (Đúng) suffix
             if (content.endsWith('*') || content.includes('(Đúng)') || content.includes('(đúng)')) {
               isCorrect = true;
               content = content.replace(/\*|\(Đúng\)|\(đúng\)/g, '').trim();
             }
-            
+
             answers.push({ id: label, content, isCorrect });
           }
         }
 
-        if (questionContent && answers.length >= 2) {
-          // If no correct answer marked, default first one
-          if (!answers.some(a => a.isCorrect)) {
+        if (questionContent) {
+          let questionType = 'Trắc nghiệm';
+          if (answers.length < 2) {
+            questionType = 'Tự luận';
+          }
+
+          // If no correct answer marked, default first one (only for multiple choice)
+          if (answers.length >= 2 && !answers.some((a) => a.isCorrect)) {
             answers[0].isCorrect = true;
           }
 
           questionsToSave.push({
             content: questionContent,
-            type: 'Trắc nghiệm',
+            type: questionType,
             difficulty: 'Trung bình',
             subject: req.body.subject || 'Chưa xác định',
             grade: req.body.grade || 'Chưa xác định',
-            answers,
+            answers: answers.length >= 2 ? answers : undefined,
             author: req.user?.name || 'Admin',
           });
         }
@@ -303,7 +372,12 @@ exports.importQuestions = async (req, res) => {
         const content = row['Nội dung'].trim();
         const subject = req.body.subject || row['Môn học'] || 'Chưa xác định';
         const grade = req.body.grade || row['Khối'] || 'Chưa xác định';
-        const exists = await Question.findOne({ content, subject, grade });
+        const exists = await Question.findOne({
+          content,
+          contentImage: row['Hình ảnh'], // Just in case, we'll handle it even if not present
+          subject,
+          grade,
+        });
         if (exists) {
           errors.push(`Dòng ${lineNum}: Câu hỏi đã tồn tại trong hệ thống`);
           continue;
@@ -325,7 +399,10 @@ exports.importQuestions = async (req, res) => {
           const correctRaw = (row['Đúng'] || row['Dung'] || '').toString().trim();
           const correctSet = new Set(
             correctRaw
-              ? correctRaw.split(',').map(s => s.trim().toUpperCase()).filter(Boolean)
+              ? correctRaw
+                  .split(',')
+                  .map((s) => s.trim().toUpperCase())
+                  .filter(Boolean)
               : [],
           );
           labels.forEach((lab) => {
@@ -339,7 +416,11 @@ exports.importQuestions = async (req, res) => {
             }
           });
         } else if (row['Đáp án']) {
-          const lines = row['Đáp án'].toString().split('\n').map(l => l.trim()).filter(Boolean);
+          const lines = row['Đáp án']
+            .toString()
+            .split('\n')
+            .map((l) => l.trim())
+            .filter(Boolean);
           const answerPattern = /^([A-D])[\.\):]\s*(.*)/i;
           lines.forEach((ln) => {
             const m = ln.match(answerPattern);
@@ -356,7 +437,7 @@ exports.importQuestions = async (req, res) => {
           });
         }
 
-        if (answers.length >= 2 && !answers.some(a => a.isCorrect)) {
+        if (answers.length >= 2 && !answers.some((a) => a.isCorrect)) {
           answers[0].isCorrect = true;
         }
 
@@ -373,13 +454,20 @@ exports.importQuestions = async (req, res) => {
     }
 
     if (questionsToSave.length === 0 && errors.length > 0) {
-      return res.status(400).json({ message: 'Lỗi định dạng dữ liệu hoặc không tìm thấy câu hỏi hợp lệ', errors });
+      return res
+        .status(400)
+        .json({ message: 'Lỗi định dạng dữ liệu hoặc không tìm thấy câu hỏi hợp lệ', errors });
     }
 
     // Filter out duplicates in DB before saving
     const uniqueQuestions = [];
     for (const q of questionsToSave) {
-      const exists = await Question.findOne({ content: q.content, subject: q.subject, grade: q.grade });
+      const exists = await Question.findOne({
+        content: q.content,
+        contentImage: q.contentImage,
+        subject: q.subject,
+        grade: q.grade,
+      });
       if (!exists) {
         uniqueQuestions.push(q);
       }
@@ -389,10 +477,10 @@ exports.importQuestions = async (req, res) => {
       await Question.insertMany(uniqueQuestions);
     }
 
-    res.status(201).json({ 
+    res.status(201).json({
       message: `Đã nhập thành công ${uniqueQuestions.length} câu hỏi`,
       skipped: questionsToSave.length - uniqueQuestions.length,
-      errors: errors.length > 0 ? errors : undefined
+      errors: errors.length > 0 ? errors : undefined,
     });
   } catch (err) {
     res.status(500).json({ message: err.message });

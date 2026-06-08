@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
+    "seed:admin": "node scripts/seed-admin.js",
     "test": "jest"
   },
   "keywords": [],
@@ -13,13 +14,19 @@
   "license": "ISC",
   "dependencies": {
     "bcryptjs": "^3.0.3",
+    "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
     "dotenv": "^17.2.4",
+    "edutest-pro": "file:..",
     "express": "^5.2.1",
+    "express-rate-limit": "^8.1.0",
+    "google-auth-library": "^10.3.0",
+    "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.3",
     "mammoth": "^1.11.0",
     "mongoose": "^9.2.0",
     "multer": "^2.0.2",
+    "pdf-parse": "^1.1.1",
     "socket.io": "^4.8.3",
     "xlsx": "^0.18.5"
   },

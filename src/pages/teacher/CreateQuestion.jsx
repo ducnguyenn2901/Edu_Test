@@ -1,23 +1,47 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ArrowLeft, Save, Plus, Trash2, Info, Loader2, ChevronsUpDown, Check } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { cn } from '../../lib/utils';
 import { questionApi, categoryApi } from '../../services/api';
 import { useToast } from '../../context/ToastContext.jsx';
+import { MathEditor } from '../../components/common/MathEditor.jsx';
+import { LatexContentEditor } from '../../components/common/LatexContentEditor.jsx';
 
 function QuestionCard({ question, index, updateQuestion, removeQuestion, isOnlyQuestion }) {
   const [isCollapsed, setIsCollapsed] = useState(index > 0); // Collapse new questions by default
+  const contentTextareaRef = useRef(null);
+  const answerTextareaRefs = useRef({});
+  const [latexEditorState, setLatexEditorState] = useState({
+    open: false,
+    target: 'question',
+    answerId: null,
+  });
 
   const handleInputChange = (field, value) => {
-    updateQuestion(question.id, field, value);
+    if (field === 'type' && value === 'Đúng/Sai') {
+      // When changing to True/False, ensure exactly 2 answers
+      const currentAnswers = question.answers;
+      let newAnswers = currentAnswers;
+      
+      if (currentAnswers.length !== 2 || currentAnswers[0].id !== 'A' || currentAnswers[1].id !== 'B') {
+        newAnswers = [
+          { id: 'A', content: '', isCorrect: currentAnswers.some(a => a.isCorrect && a.id === 'A') || (!currentAnswers.some(a => a.isCorrect) && true) },
+          { id: 'B', content: '', isCorrect: currentAnswers.some(a => a.isCorrect && a.id === 'B') || false },
+        ];
+      }
+      updateQuestion(question.id, 'type', value);
+      updateQuestion(question.id, 'answers', newAnswers);
+    } else {
+      updateQuestion(question.id, field, value);
+    }
   };
 
   const handleAnswerChange = (answerId, field, value) => {
-    const newAnswers = question.answers.map(a => {
+    const newAnswers = question.answers.map((a) => {
       if (a.id === answerId) {
         return { ...a, [field]: value };
       }
-      if (question.type === 'Trắc nghiệm' && field === 'isCorrect' && value === true) {
+      if ((question.type === 'Trắc nghiệm' || question.type === 'Đúng/Sai') && field === 'isCorrect' && value === true) {
         return { ...a, isCorrect: false };
       }
       return a;
@@ -26,7 +50,8 @@ function QuestionCard({ question, index, updateQuestion, removeQuestion, isOnlyQ
   };
 
   const addAnswer = () => {
-    const lastId = question.answers.length > 0 ? question.answers[question.answers.length - 1].id : '@';
+    const lastId =
+      question.answers.length > 0 ? question.answers[question.answers.length - 1].id : '@';
     const nextId = String.fromCharCode(lastId.charCodeAt(0) + 1);
     const newAnswers = [...question.answers, { id: nextId, content: '', isCorrect: false }];
     updateQuestion(question.id, 'answers', newAnswers);
@@ -37,13 +62,13 @@ function QuestionCard({ question, index, updateQuestion, removeQuestion, isOnlyQ
       alert('Một câu hỏi phải có ít nhất 2 phương án.');
       return;
     }
-    const newAnswers = question.answers.filter(a => a.id !== answerId);
+    const newAnswers = question.answers.filter((a) => a.id !== answerId);
     updateQuestion(question.id, 'answers', newAnswers);
   };
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden group transition-all">
-      <div 
+      <div
         className="flex items-center justify-between p-3 bg-gray-50/70 border-b border-gray-200 cursor-pointer"
         onClick={() => setIsCollapsed(!isCollapsed)}
       >
@@ -57,7 +82,10 @@ function QuestionCard({ question, index, updateQuestion, removeQuestion, isOnlyQ
         </div>
         <div className="flex items-center gap-2">
           <button
-            onClick={(e) => { e.stopPropagation(); setIsCollapsed(!isCollapsed); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsCollapsed(!isCollapsed);
+            }}
             className="p-2 text-gray-400 hover:text-gray-700 hover:bg-gray-200 rounded-lg"
           >
             <ChevronsUpDown className="w-4 h-4" />
@@ -82,37 +110,79 @@ function QuestionCard({ question, index, updateQuestion, removeQuestion, isOnlyQ
       {!isCollapsed && (
         <div className="p-6 space-y-6">
           <div>
-            <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Nội dung câu hỏi <span className="text-red-500">*</span></label>
-            <textarea
-              value={question.content}
-              onChange={(e) => handleInputChange('content', e.target.value)}
-              className="w-full min-h-[120px] text-gray-800 text-lg resize-none focus:outline-none bg-transparent placeholder-gray-300 leading-relaxed"
-              placeholder="Nhập nội dung câu hỏi tại đây..."
-            ></textarea>
+            <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">
+              Nội dung câu hỏi <span className="text-red-500">*</span>
+            </label>
+            <div className="space-y-3">
+              <div className="flex gap-2 flex-wrap">
+                <textarea
+                  ref={contentTextareaRef}
+                  value={question.content}
+                  onChange={(e) => handleInputChange('content', e.target.value)}
+                  className="flex-1 min-h-[120px] p-4 border border-gray-200 rounded-xl text-gray-800 text-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50/50 placeholder-gray-300 leading-relaxed"
+                  placeholder="Nhập nội dung câu hỏi tại đây..."
+                ></textarea>
+              </div>
+              <div className="flex gap-2 flex-wrap">
+                <MathEditor
+                  value={question.formula || ''}
+                  onChange={(latex) => handleInputChange('formula', latex)}
+                />
+                {question.formula && (
+                  <div className="px-3 py-2 bg-blue-50 rounded-lg border border-blue-200">
+                    <div
+                      dangerouslySetInnerHTML={{
+                        __html:
+                          window.katex?.renderToString(question.formula, {
+                            throwOnError: false,
+                            displayMode: false,
+                          }) || '',
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Độ khó</label>
+              <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+                Độ khó
+              </label>
               <div className="flex gap-2">
-                {['Dễ', 'Trung bình', 'Khó'].map(level => (
-                  <button key={level} onClick={() => handleInputChange('difficulty', level)} className={cn(
-                    "px-4 py-1.5 rounded-lg border text-sm font-medium transition-colors",
-                    question.difficulty === level ? 'bg-blue-500 text-white border-blue-500' : 'bg-white hover:bg-gray-100 border-gray-300'
-                  )}>
+                {['Dễ', 'Trung bình', 'Khó'].map((level) => (
+                  <button
+                    key={level}
+                    onClick={() => handleInputChange('difficulty', level)}
+                    className={cn(
+                      'px-4 py-1.5 rounded-lg border text-sm font-medium transition-colors',
+                      question.difficulty === level
+                        ? 'bg-blue-500 text-white border-blue-500'
+                        : 'bg-white hover:bg-gray-100 border-gray-300',
+                    )}
+                  >
                     {level}
                   </button>
                 ))}
               </div>
             </div>
             <div>
-              <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Loại câu hỏi</label>
+              <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+                Loại câu hỏi
+              </label>
               <div className="flex gap-2 bg-gray-100 p-1 rounded-lg">
-                 {['Trắc nghiệm', 'Tự luận'].map(qType => (
-                  <button key={qType} onClick={() => handleInputChange('type', qType)} className={cn(
-                    "flex-1 py-1 rounded-md text-sm font-medium transition-colors",
-                    question.type === qType ? 'bg-white text-blue-600 shadow' : 'text-gray-500 hover:bg-white/50'
-                  )}>
+                {['Trắc nghiệm', 'Đúng/Sai', 'Tự luận'].map((qType) => (
+                  <button
+                    key={qType}
+                    onClick={() => handleInputChange('type', qType)}
+                    className={cn(
+                      'flex-1 py-1 rounded-md text-sm font-medium transition-colors',
+                      question.type === qType
+                        ? 'bg-white text-blue-600 shadow'
+                        : 'text-gray-500 hover:bg-white/50',
+                    )}
+                  >
                     {qType}
                   </button>
                 ))}
@@ -123,49 +193,128 @@ function QuestionCard({ question, index, updateQuestion, removeQuestion, isOnlyQ
           {question.type === 'Trắc nghiệm' && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider">Phương án</h3>
-                <span className="text-xs text-blue-600 bg-blue-50 px-3 py-1 rounded-full font-medium">Chọn vòng tròn xanh cho đáp án đúng</span>
+                <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider">
+                  Phương án
+                </h3>
+                <span className="text-xs text-blue-600 bg-blue-50 px-3 py-1 rounded-full font-medium">
+                  Chọn vòng tròn xanh cho đáp án đúng
+                </span>
               </div>
               <div className="space-y-3">
                 {question.answers.map((ans) => (
-                  <div key={ans.id} className="flex items-center gap-4 bg-white p-2 rounded-xl border border-gray-200 group/answer">
-                    <div className="relative flex items-center justify-center w-10 h-10 shrink-0">
-                      <input
-                        type="radio"
-                        name={`correct-answer-${question.id}`}
-                        checked={ans.isCorrect}
-                        className="peer appearance-none w-6 h-6 border-2 border-gray-300 rounded-full checked:border-blue-600 checked:bg-blue-600 transition-all cursor-pointer hover:border-blue-400"
-                        onChange={() => handleAnswerChange(ans.id, 'isCorrect', true)}
-                      />
-                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-0 peer-checked:opacity-100 text-white transition-opacity">
-                        <Check className="w-3.5 h-3.5" />
+                  <div
+                    key={ans.id}
+                    className="bg-white p-4 rounded-xl border border-gray-200 group/answer space-y-3"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="relative flex items-center justify-center w-10 h-10 shrink-0">
+                        <input
+                          type="radio"
+                          name={`correct-answer-${question._id}`}
+                          checked={ans.isCorrect}
+                          className="peer appearance-none w-6 h-6 border-2 border-gray-300 rounded-full checked:border-blue-600 checked:bg-blue-600 transition-all cursor-pointer hover:border-blue-400"
+                          onChange={() => handleAnswerChange(ans.id, 'isCorrect', true)}
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-0 peer-checked:opacity-100 text-white transition-opacity">
+                          <Check className="w-3.5 h-3.5" />
+                        </div>
                       </div>
+                      <div className="flex-1">
+                        <span className="w-8 h-8 flex items-center justify-center font-bold rounded-lg text-sm bg-gray-100 text-gray-500 mr-3">
+                          {ans.id}
+                        </span>
+                        <textarea
+                          ref={(el) => (answerTextareaRefs.current[ans.id] = el)}
+                          value={ans.content}
+                          onChange={(e) => handleAnswerChange(ans.id, 'content', e.target.value)}
+                          className="w-full bg-transparent border-b-2 border-transparent focus:border-blue-500 focus:outline-none py-1 text-gray-900 font-medium placeholder-gray-400 resize-none min-h-[40px]"
+                          placeholder={`Nội dung phương án ${ans.id}...`}
+                        />
+                      </div>
+                      <button
+                        onClick={() => removeAnswer(ans.id)}
+                        className="opacity-0 group-hover/answer:opacity-100 p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </div>
-                    <div className="flex-1 flex items-center gap-3">
-                      <span className="w-8 h-8 flex items-center justify-center font-bold rounded-lg text-sm bg-gray-100 text-gray-500">{ans.id}</span>
-                      <input
-                        type="text"
-                        value={ans.content}
-                        onChange={(e) => handleAnswerChange(ans.id, 'content', e.target.value)}
-                        className="w-full bg-transparent border-b-2 border-transparent focus:border-blue-500 focus:outline-none py-1 text-gray-900 font-medium placeholder-gray-400"
-                        placeholder={`Nội dung phương án ${ans.id}...`}
+                    <div className="flex gap-2 flex-wrap">
+                      <MathEditor
+                        value={ans.formula || ''}
+                        onChange={(latex) => handleAnswerChange(ans.id, 'formula', latex)}
                       />
+                      {ans.formula && (
+                        <div className="px-3 py-2 bg-blue-50 rounded-lg border border-blue-200">
+                          <div
+                            dangerouslySetInnerHTML={{
+                              __html:
+                                window.katex?.renderToString(ans.formula, {
+                                  throwOnError: false,
+                                  displayMode: false,
+                                }) || '',
+                            }}
+                          />
+                        </div>
+                      )}
                     </div>
-                    <button onClick={() => removeAnswer(ans.id)} className="opacity-0 group-hover/answer:opacity-100 p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg">
-                      <Trash2 className="w-4 h-4" />
-                    </button>
                   </div>
                 ))}
               </div>
-              <button onClick={addAnswer} className="w-full py-2 border-2 border-dashed border-gray-300 rounded-xl text-gray-500 font-medium hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 transition-all flex items-center justify-center gap-2">
+              <button
+                onClick={addAnswer}
+                className="w-full py-2 border-2 border-dashed border-gray-300 rounded-xl text-gray-500 font-medium hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 transition-all flex items-center justify-center gap-2"
+              >
                 <Plus className="w-4 h-4" />
                 Thêm phương án
               </button>
             </div>
           )}
 
+          {question.type === 'Đúng/Sai' && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider">
+                  Chọn đáp án đúng
+                </h3>
+                <span className="text-xs text-blue-600 bg-blue-50 px-3 py-1 rounded-full font-medium">
+                  Chọn vòng tròn xanh cho đáp án đúng
+                </span>
+              </div>
+              <div className="space-y-3">
+                {question.answers.map((ans) => (
+                  <div
+                    key={ans.id}
+                    className="bg-white p-4 rounded-xl border border-gray-200 group/answer space-y-3"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="relative flex items-center justify-center w-10 h-10 shrink-0">
+                        <input
+                          type="radio"
+                          name={`correct-answer-${question._id}`}
+                          checked={ans.isCorrect}
+                          className="peer appearance-none w-6 h-6 border-2 border-gray-300 rounded-full checked:border-blue-600 checked:bg-blue-600 transition-all cursor-pointer hover:border-blue-400"
+                          onChange={() => handleAnswerChange(ans.id, 'isCorrect', true)}
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-0 peer-checked:opacity-100 text-white transition-opacity">
+                          <Check className="w-3.5 h-3.5" />
+                        </div>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <span className="font-bold text-sm text-gray-900">
+                          {ans.id === 'A' ? 'Đúng' : 'Sai'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div>
-            <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Lời giải chi tiết</label>
+            <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">
+              Lời giải chi tiết
+            </label>
             <textarea
               value={question.explanation}
               onChange={(e) => handleInputChange('explanation', e.target.value)}
@@ -175,6 +324,34 @@ function QuestionCard({ question, index, updateQuestion, removeQuestion, isOnlyQ
           </div>
         </div>
       )}
+
+      <LatexContentEditor
+        isOpen={latexEditorState.open}
+        title="Soạn nội dung (LaTeX)"
+        initialValue={
+          latexEditorState.target === 'answer'
+            ? question.answers?.find((a) => a.id === latexEditorState.answerId)?.content || ''
+            : question.content || ''
+        }
+        onClose={() => setLatexEditorState((s) => ({ ...s, open: false }))}
+        onSave={(next) => {
+          if (latexEditorState.target === 'answer') {
+            handleAnswerChange(latexEditorState.answerId, 'content', next);
+          } else {
+            handleInputChange('content', next);
+          }
+          setLatexEditorState((s) => ({ ...s, open: false }));
+        }}
+        getPreviewQuestion={(draft) => {
+          if (latexEditorState.target === 'answer') {
+            const answers = (question.answers || []).map((a) =>
+              a.id === latexEditorState.answerId ? { ...a, content: draft } : a,
+            );
+            return { ...question, answers };
+          }
+          return { ...question, content: draft };
+        }}
+      />
     </div>
   );
 }
@@ -197,7 +374,7 @@ export function CreateQuestion() {
       { id: 'B', content: '', isCorrect: false },
       { id: 'C', content: '', isCorrect: false },
       { id: 'D', content: '', isCorrect: false },
-    ]
+    ],
   });
 
   const [questions, setQuestions] = useState([createNewQuestion()]);
@@ -205,24 +382,26 @@ export function CreateQuestion() {
     subject: 'Toán học',
     grade: 'Khối 12',
     category: '',
+    isPublic: false,
   });
 
   useEffect(() => {
-    categoryApi.getAll()
-      .then(res => setCategories(res.data || []))
+    categoryApi
+      .getAll()
+      .then((res) => setCategories(res.data || []))
       .catch(() => showToast({ message: 'Không thể tải danh mục.', type: 'error' }));
   }, [showToast]);
 
   const addQuestion = () => {
-    setQuestions(prev => [...prev, createNewQuestion()]);
+    setQuestions((prev) => [...prev, createNewQuestion()]);
   };
 
   const removeQuestion = (id) => {
-    setQuestions(prev => prev.filter(q => q.id !== id));
+    setQuestions((prev) => prev.filter((q) => q.id !== id));
   };
 
   const updateQuestion = (id, field, value) => {
-    setQuestions(prev => prev.map(q => q.id === id ? { ...q, [field]: value } : q));
+    setQuestions((prev) => prev.map((q) => (q.id === id ? { ...q, [field]: value } : q)));
   };
 
   const handleSave = async () => {
@@ -233,16 +412,16 @@ export function CreateQuestion() {
       if (!q.content.trim()) {
         validationErrors.push(`Câu hỏi ${index + 1}: Vui lòng nhập nội dung.`);
       }
-      if (q.type === 'Trắc nghiệm') {
-        if (!q.answers.some(a => a.isCorrect)) {
+      if (q.type === 'Trắc nghiệm' || q.type === 'Đúng/Sai') {
+        if (!q.answers.some((a) => a.isCorrect)) {
           validationErrors.push(`Câu hỏi ${index + 1}: Vui lòng chọn ít nhất một đáp án đúng.`);
         }
-        if (q.answers.some(a => !a.content.trim())) {
+        if (q.type === 'Trắc nghiệm' && q.answers.some((a) => !a.content.trim())) {
           validationErrors.push(`Câu hỏi ${index + 1}: Không được để trống nội dung phương án.`);
         }
       }
 
-      const { id, ...questionData } = q;
+      const { id: _id, ...questionData } = q;
       const finalQuestion = {
         ...commonData,
         ...questionData,
@@ -264,7 +443,10 @@ export function CreateQuestion() {
     try {
       const payload = questionsToSave.length === 1 ? questionsToSave[0] : questionsToSave;
       await questionApi.create(payload);
-      showToast({ message: `Đã lưu thành công ${questionsToSave.length} câu hỏi!`, type: 'success' });
+      showToast({
+        message: `Đã lưu thành công ${questionsToSave.length} câu hỏi!`,
+        type: 'success',
+      });
       navigate('/teacher/questions');
     } catch (error) {
       const errorMsg = error.response?.data?.message || 'Có lỗi xảy ra khi lưu.';
@@ -279,7 +461,10 @@ export function CreateQuestion() {
     <div className="space-y-6 pb-20">
       <div className="flex items-center justify-between sticky top-0 bg-gray-50 py-4 z-10 backdrop-blur-sm bg-opacity-90">
         <div className="flex items-center gap-4">
-          <Link to="/teacher/questions" className="p-2 hover:bg-white hover:shadow-sm rounded-lg transition-all border border-transparent hover:border-gray-200">
+          <Link
+            to="/teacher/questions"
+            className="p-2 hover:bg-white hover:shadow-sm rounded-lg transition-all border border-transparent hover:border-gray-200"
+          >
             <ArrowLeft className="w-5 h-5 text-gray-500" />
           </Link>
           <div>
@@ -288,8 +473,17 @@ export function CreateQuestion() {
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <button onClick={() => navigate('/teacher/questions')} className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 font-medium text-sm">Hủy bỏ</button>
-          <button onClick={handleSave} disabled={isSaving || questions.length === 0} className="flex items-center gap-2 px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 font-medium text-sm shadow-sm disabled:opacity-70">
+          <button
+            onClick={() => navigate('/teacher/questions')}
+            className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 font-medium text-sm"
+          >
+            Hủy bỏ
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={isSaving || questions.length === 0}
+            className="flex items-center gap-2 px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 font-medium text-sm shadow-sm disabled:opacity-70"
+          >
             {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             {isSaving ? 'Đang lưu...' : `Lưu ${questions.length} câu hỏi`}
           </button>
@@ -306,7 +500,11 @@ export function CreateQuestion() {
             <div className="space-y-5">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">Môn học</label>
-                <select value={commonData.subject} onChange={(e) => setCommonData({...commonData, subject: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm outline-none">
+                <select
+                  value={commonData.subject}
+                  onChange={(e) => setCommonData({ ...commonData, subject: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm outline-none"
+                >
                   <option>Toán học</option>
                   <option>Vật lý</option>
                   <option>Hóa học</option>
@@ -323,7 +521,11 @@ export function CreateQuestion() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">Khối lớp</label>
-                <select value={commonData.grade} onChange={(e) => setCommonData({...commonData, grade: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm outline-none">
+                <select
+                  value={commonData.grade}
+                  onChange={(e) => setCommonData({ ...commonData, grade: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm outline-none"
+                >
                   <option>Khối 6</option>
                   <option>Khối 7</option>
                   <option>Khối 8</option>
@@ -337,10 +539,30 @@ export function CreateQuestion() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">Danh mục</label>
-                <select value={commonData.category} onChange={(e) => setCommonData({ ...commonData, category: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm outline-none">
+                <select
+                  value={commonData.category}
+                  onChange={(e) => setCommonData({ ...commonData, category: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm outline-none"
+                >
                   <option value="">Không chọn</option>
-                  {categories.map((c) => (<option key={c._id} value={c._id}>{c.name}</option>))}
+                  {categories.map((c) => (
+                    <option key={c._id} value={c._id}>
+                      {c.name}
+                    </option>
+                  ))}
                 </select>
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="isPublic"
+                  checked={commonData.isPublic}
+                  onChange={(e) => setCommonData({ ...commonData, isPublic: e.target.checked })}
+                  className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <label htmlFor="isPublic" className="text-sm text-gray-700">
+                  Đưa vào ngân hàng chung (cho giáo viên khác sử dụng)
+                </label>
               </div>
             </div>
           </div>

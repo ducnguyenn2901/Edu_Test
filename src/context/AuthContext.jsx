@@ -4,7 +4,6 @@ import { authApi } from '../services/api';
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [token, setToken] = useState(() => localStorage.getItem('token'));
   const [user, setUser] = useState(() => {
     const storedUser = localStorage.getItem('user');
     if (!storedUser) return null;
@@ -18,68 +17,49 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     const verifySession = async () => {
-      if (token) {
-        try {
-          const response = await authApi.getProfile();
-          setUser(response.data);
-          localStorage.setItem('user', JSON.stringify(response.data));
-        } catch (error) {
-          console.error('Session verification failed:', error);
-          logout();
-        }
+      try {
+        const response = await authApi.getProfile();
+        setUser(response.data);
+        localStorage.setItem('user', JSON.stringify(response.data));
+      } catch {
+        setUser(null);
+        localStorage.removeItem('user');
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
     verifySession();
-  }, [token]);
+  }, []);
 
   const login = async (email, password) => {
-    try {
-      const response = await authApi.login({ email, password });
-      const { token: newToken, ...userData } = response.data;
-      setToken(newToken);
-      setUser(userData);
-      localStorage.setItem('token', newToken);
-      localStorage.setItem('user', JSON.stringify(userData));
-      return userData;
-    } catch (error) {
-      throw error;
-    }
+    const response = await authApi.login({ email, password });
+    setUser(response.data);
+    localStorage.setItem('user', JSON.stringify(response.data));
+    return response.data;
   };
 
   const register = async (userData) => {
-    try {
-      const response = await authApi.register(userData);
-      
-      // If status is pending (for teachers), don't set token/user
-      if (response.data.status === 'pending') {
-        return response.data;
-      }
-
-      const { token: newToken, ...newUserData } = response.data;
-      setToken(newToken);
-      setUser(newUserData);
-      localStorage.setItem('token', newToken);
-      localStorage.setItem('user', JSON.stringify(newUserData));
-      return newUserData;
-    } catch (error) {
-      throw error;
-    }
+    const response = await authApi.register(userData);
+    if (response.data.status === 'pending') return response.data;
+    setUser(response.data);
+    localStorage.setItem('user', JSON.stringify(response.data));
+    return response.data;
   };
 
-  const logout = () => {
-    setToken(null);
-    setUser(null);
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+  const logout = async () => {
+    try {
+      await authApi.logout();
+    } finally {
+      setUser(null);
+      localStorage.removeItem('user');
+    }
   };
 
   const value = {
     user,
-    token,
     loading,
-    isAuthenticated: !!token,
+    isAuthenticated: !!user,
     login,
     register,
     logout,

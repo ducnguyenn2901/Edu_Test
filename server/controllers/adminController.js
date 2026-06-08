@@ -30,9 +30,7 @@ const getStats = async (req, res) => {
     }
 
     const rangeEnd = toDate || new Date();
-    const rangeStart =
-      fromDate ||
-      new Date(rangeEnd.getTime() - 29 * 24 * 60 * 60 * 1000);
+    const rangeStart = fromDate || new Date(rangeEnd.getTime() - 29 * 24 * 60 * 60 * 1000);
 
     const [totalUsers, totalTeachers, totalStudents, totalAdmins] = await Promise.all([
       User.countDocuments(),
@@ -41,14 +39,13 @@ const getStats = async (req, res) => {
       User.countDocuments({ role: 'admin' }),
     ]);
 
-    const [totalQuestions, totalExams, examsWithAttempts] =
-      await Promise.all([
-        Question.countDocuments(),
-        Exam.countDocuments(),
-        Exam.find({ attempts: { $exists: true, $ne: [] } })
-          .select('title subject grade createdBy attempts')
-          .lean(),
-      ]);
+    const [totalQuestions, totalExams, examsWithAttempts] = await Promise.all([
+      Question.countDocuments(),
+      Exam.countDocuments(),
+      Exam.find({ attempts: { $exists: true, $ne: [] } })
+        .select('title subject grade createdBy attempts')
+        .lean(),
+    ]);
 
     const [questionsByDay, examsByDay, usersByDay] = await Promise.all([
       Question.aggregate([
@@ -125,9 +122,7 @@ const getStats = async (req, res) => {
     });
 
     const studentIdSet = new Set(
-      attempts
-        .map((item) => item.studentId?.toString())
-        .filter((id) => id),
+      attempts.map((item) => item.studentId?.toString()).filter((id) => id),
     );
 
     const studentIds = Array.from(studentIdSet);
@@ -138,9 +133,7 @@ const getStats = async (req, res) => {
           .lean()
       : [];
 
-    const studentMap = new Map(
-      studentDocs.map((u) => [u._id.toString(), u]),
-    );
+    const studentMap = new Map(studentDocs.map((u) => [u._id.toString(), u]));
 
     const attemptsBySubject = attempts.reduce((acc, curr) => {
       const key = curr.subject || 'Khác';
@@ -214,9 +207,7 @@ const getStats = async (req, res) => {
       const d = curr.submittedAt;
       const year = d.getFullYear();
       const firstDayOfYear = new Date(year, 0, 1);
-      const pastDaysOfYear = Math.floor(
-        (d - firstDayOfYear) / (24 * 60 * 60 * 1000),
-      );
+      const pastDaysOfYear = Math.floor((d - firstDayOfYear) / (24 * 60 * 60 * 1000));
       const week = Math.floor(pastDaysOfYear / 7) + 1;
       const key = `${year}-W${week}`;
 
@@ -254,10 +245,7 @@ const getStats = async (req, res) => {
         title: item.title,
         subject: item.subject,
         attempts: item.attempts,
-        avgScore:
-          item.attempts > 0
-            ? Number((item.totalScore / item.attempts).toFixed(2))
-            : 0,
+        avgScore: item.attempts > 0 ? Number((item.totalScore / item.attempts).toFixed(2)) : 0,
       }))
       .sort((a, b) => b.attempts - a.attempts)
       .slice(0, 5);
@@ -367,24 +355,15 @@ const exportAttempts = async (req, res) => {
           grade: exam.grade || '',
           studentId: attempt.studentId,
           score: typeof attempt.score === 'number' ? attempt.score : '',
-          correctCount:
-            typeof attempt.correctCount === 'number'
-              ? attempt.correctCount
-              : '',
-          totalQuestions:
-            typeof attempt.totalQuestions === 'number'
-              ? attempt.totalQuestions
-              : '',
-          timeSpentSeconds:
-            typeof attempt.timeSpent === 'number' ? attempt.timeSpent : '',
+          correctCount: typeof attempt.correctCount === 'number' ? attempt.correctCount : '',
+          totalQuestions: typeof attempt.totalQuestions === 'number' ? attempt.totalQuestions : '',
+          timeSpentSeconds: typeof attempt.timeSpent === 'number' ? attempt.timeSpent : '',
           submittedAt: submittedAt.toISOString(),
         });
       });
     });
 
-    rows.sort(
-      (a, b) => new Date(a.submittedAt) - new Date(b.submittedAt),
-    );
+    rows.sort((a, b) => new Date(a.submittedAt) - new Date(b.submittedAt));
 
     const header = [
       'Exam Title',
@@ -431,10 +410,7 @@ const exportAttempts = async (req, res) => {
     const csvContent = csvLines.join('\n');
 
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-    res.setHeader(
-      'Content-Disposition',
-      'attachment; filename="attempts_export.csv"',
-    );
+    res.setHeader('Content-Disposition', 'attachment; filename="attempts_export.csv"');
     res.send(csvContent);
   } catch (error) {
     res.status(500).json({ message: error.message });

@@ -1,5 +1,19 @@
 import React, { useEffect, useState } from 'react';
-import { Search, Plus, Users, Award, BookOpen, Lock, Filter, Download, MoreHorizontal, Edit2, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
+import {
+  Search,
+  Plus,
+  Users,
+  Award,
+  BookOpen,
+  Lock,
+  Filter,
+  Download,
+  MoreHorizontal,
+  Edit2,
+  Trash2,
+  ChevronLeft,
+  ChevronRight,
+} from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { adminApi } from '../../services/api';
 import { useToast } from '../../context/ToastContext.jsx';
@@ -52,20 +66,29 @@ export function UserManagement() {
 
   const getRoleLabel = (role) => {
     switch (role?.toLowerCase()) {
-      case 'admin': return 'Quản trị viên';
-      case 'teacher': return 'Giáo viên';
-      case 'mod': return 'Điều phối';
-      case 'student': return 'Học sinh';
-      default: return 'Người dùng';
+      case 'admin':
+        return 'Quản trị viên';
+      case 'teacher':
+        return 'Giáo viên';
+      case 'mod':
+        return 'Điều phối';
+      case 'student':
+        return 'Học sinh';
+      default:
+        return 'Người dùng';
     }
   };
 
   const getRoleColor = (role) => {
     switch (role?.toLowerCase()) {
-      case 'admin': return 'purple';
-      case 'teacher': return 'blue';
-      case 'mod': return 'indigo';
-      default: return 'orange';
+      case 'admin':
+        return 'purple';
+      case 'teacher':
+        return 'blue';
+      case 'mod':
+        return 'indigo';
+      default:
+        return 'orange';
     }
   };
 
@@ -154,9 +177,7 @@ export function UserManagement() {
 
   if (error) {
     return (
-      <div className="flex items-center justify-center min-h-[400px] text-red-500">
-        {error}
-      </div>
+      <div className="flex items-center justify-center min-h-[400px] text-red-500">{error}</div>
     );
   }
 
@@ -221,10 +242,7 @@ export function UserManagement() {
       showToast({
         type: 'success',
         title: 'Cập nhật trạng thái',
-        message:
-          nextStatus === 'Locked'
-            ? 'Tài khoản đã được khóa.'
-            : 'Tài khoản đã được mở khóa.',
+        message: nextStatus === 'Locked' ? 'Tài khoản đã được khóa.' : 'Tài khoản đã được mở khóa.',
       });
     } catch (err) {
       console.error('Failed to toggle user lock', err);
@@ -339,14 +357,14 @@ export function UserManagement() {
         <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-white text-[10px] font-bold uppercase tracking-widest border border-white/20 mb-4">
-               <Lock className="w-3 h-3" /> Hệ thống quản trị
+              <Lock className="w-3 h-3" /> Hệ thống quản trị
             </div>
             <h1 className="text-3xl md:text-4xl font-black tracking-tight">Quản lý người dùng</h1>
             <p className="mt-2 text-blue-100 max-w-xl font-medium">
               Kiểm soát quyền truy cập, quản lý tài khoản giáo viên và học sinh trên toàn hệ thống.
             </p>
           </div>
-          
+
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="relative group">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-blue-200 group-focus-within:text-white transition-colors" />
@@ -368,7 +386,7 @@ export function UserManagement() {
             </button>
           </div>
         </div>
-        
+
         {/* Decorative elements */}
         <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/4 w-96 h-96 bg-white/10 rounded-full blur-3xl" />
         <div className="absolute bottom-0 left-0 translate-y-1/2 -translate-x-1/4 w-64 h-64 bg-blue-400/20 rounded-full blur-3xl" />
@@ -377,17 +395,58 @@ export function UserManagement() {
       {/* Stats Bento Grid */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
         {[
-          { label: 'Tổng số', value: totalUsers, icon: Users, color: 'text-brand-600', bg: 'bg-brand-50' },
-          { label: 'Giáo viên', value: totalTeachers, icon: Award, color: 'text-purple-600', bg: 'bg-purple-50' },
-          { label: 'Học sinh', value: totalStudents, icon: BookOpen, color: 'text-warning-600', bg: 'bg-warning-50' },
-          { label: 'Bị khóa', value: totalLocked, icon: Lock, color: 'text-danger-600', bg: 'bg-danger-50' },
-          { label: 'Chờ duyệt', value: totalPending, icon: Users, color: 'text-accent-600', bg: 'bg-accent-50' },
+          {
+            label: 'Tổng số',
+            value: totalUsers,
+            icon: Users,
+            color: 'text-brand-600',
+            bg: 'bg-brand-50',
+          },
+          {
+            label: 'Giáo viên',
+            value: totalTeachers,
+            icon: Award,
+            color: 'text-purple-600',
+            bg: 'bg-purple-50',
+          },
+          {
+            label: 'Học sinh',
+            value: totalStudents,
+            icon: BookOpen,
+            color: 'text-warning-600',
+            bg: 'bg-warning-50',
+          },
+          {
+            label: 'Bị khóa',
+            value: totalLocked,
+            icon: Lock,
+            color: 'text-danger-600',
+            bg: 'bg-danger-50',
+          },
+          {
+            label: 'Chờ duyệt',
+            value: totalPending,
+            icon: Users,
+            color: 'text-accent-600',
+            bg: 'bg-accent-50',
+          },
         ].map((stat, i) => (
-          <div key={i} className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-premium hover:shadow-premium-hover transition-all group overflow-hidden relative">
-            <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center mb-5 transition-all duration-500 group-hover:scale-110 group-hover:rotate-6", stat.bg, stat.color)}>
+          <div
+            key={i}
+            className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-premium hover:shadow-premium-hover transition-all group overflow-hidden relative"
+          >
+            <div
+              className={cn(
+                'w-12 h-12 rounded-2xl flex items-center justify-center mb-5 transition-all duration-500 group-hover:scale-110 group-hover:rotate-6',
+                stat.bg,
+                stat.color,
+              )}
+            >
               <stat.icon className="w-6 h-6" />
             </div>
-            <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">{stat.label}</p>
+            <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">
+              {stat.label}
+            </p>
             <div className="flex items-baseline gap-2">
               <h3 className="text-3xl font-black text-slate-900 dark:text-white">{stat.value}</h3>
               <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
@@ -408,9 +467,24 @@ export function UserManagement() {
             </div>
             <div className="flex flex-wrap gap-3">
               {[
-                { value: filterSchool, onChange: setFilterSchool, options: distinctSchools, label: 'Tất cả trường' },
-                { value: filterGrade, onChange: setFilterGrade, options: distinctGrades, label: 'Tất cả khối' },
-                { value: filterClass, onChange: setFilterClass, options: distinctClasses, label: 'Tất cả lớp' },
+                {
+                  value: filterSchool,
+                  onChange: setFilterSchool,
+                  options: distinctSchools,
+                  label: 'Tất cả trường',
+                },
+                {
+                  value: filterGrade,
+                  onChange: setFilterGrade,
+                  options: distinctGrades,
+                  label: 'Tất cả khối',
+                },
+                {
+                  value: filterClass,
+                  onChange: setFilterClass,
+                  options: distinctClasses,
+                  label: 'Tất cả lớp',
+                },
               ].map((filter, idx) => (
                 <select
                   key={idx}
@@ -420,13 +494,15 @@ export function UserManagement() {
                 >
                   <option value="">{filter.label}</option>
                   {filter.options.map((opt) => (
-                    <option key={opt} value={opt}>{opt}</option>
+                    <option key={opt} value={opt}>
+                      {opt}
+                    </option>
                   ))}
                 </select>
               ))}
             </div>
           </div>
-          
+
           <div className="text-sm font-bold text-slate-400 uppercase tracking-widest">
             Hiển thị <span className="text-brand-600">{filteredUsers.length}</span> người dùng
           </div>
@@ -441,65 +517,99 @@ export function UserManagement() {
                 <th className="px-8 py-5">Vai trò</th>
                 <th className="px-8 py-5">Liên hệ</th>
                 <th className="px-8 py-5">Lớp / Khối</th>
-                <th className="px-8 py-5">Đơn vị</th>
+                <th className="px-8 py-5">Trường</th>
                 <th className="px-8 py-5">Trạng thái</th>
                 <th className="px-8 py-5 text-right">Thao tác</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
               {filteredUsers.map((user) => (
-                <tr key={user.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-all group">
+                <tr
+                  key={user.id}
+                  className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-all group"
+                >
                   <td className="px-8 py-5">
                     <div className="flex items-center gap-4">
                       <div className="relative">
-                        <img src={user.avatar} alt={user.name} className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800 border-2 border-white dark:border-slate-700 shadow-sm" />
-                        <div className={cn(
-                          "absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white dark:border-slate-900 shadow-sm",
-                          user.status === 'Active' ? "bg-emerald-500" : "bg-slate-400"
-                        )} />
+                        <img
+                          src={user.avatar}
+                          alt={user.name}
+                          className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800 border-2 border-white dark:border-slate-700 shadow-sm"
+                        />
+                        <div
+                          className={cn(
+                            'absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white dark:border-slate-900 shadow-sm',
+                            user.status === 'Active' ? 'bg-emerald-500' : 'bg-slate-400',
+                          )}
+                        />
                       </div>
                       <div>
-                        <p className="font-bold text-slate-900 dark:text-white group-hover:text-brand-600 transition-colors">{user.name}</p>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">ID: {user.id.substring(0, 8)}</p>
+                        <p className="font-bold text-slate-900 dark:text-white group-hover:text-brand-600 transition-colors">
+                          {user.name}
+                        </p>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">
+                          ID: {user.id.substring(0, 8)}
+                        </p>
                       </div>
                     </div>
                   </td>
                   <td className="px-8 py-5">
-                    <span className={cn(
-                      "inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sm",
-                      user.role?.toLowerCase() === 'admin' ? "bg-purple-500 text-white" : 
-                      user.role?.toLowerCase() === 'teacher' ? "bg-brand-500 text-white" :
-                      user.role?.toLowerCase() === 'mod' ? "bg-indigo-500 text-white" :
-                      "bg-warning-500 text-white"
-                    )}>
+                    <span
+                      className={cn(
+                        'inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sm',
+                        user.role?.toLowerCase() === 'admin'
+                          ? 'bg-purple-500 text-white'
+                          : user.role?.toLowerCase() === 'teacher'
+                            ? 'bg-brand-500 text-white'
+                            : user.role?.toLowerCase() === 'mod'
+                              ? 'bg-indigo-500 text-white'
+                              : 'bg-warning-500 text-white',
+                      )}
+                    >
                       {getRoleLabel(user.role)}
                     </span>
                   </td>
                   <td className="px-8 py-5">
-                    <p className="text-sm font-medium text-slate-600 dark:text-slate-400">{user.email}</p>
-                    <p className="text-[10px] text-slate-400 mt-0.5 font-bold tracking-widest">{user.joinedDate ? new Date(user.joinedDate).toLocaleDateString('vi-VN') : 'N/A'}</p>
+                    <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
+                      {user.email}
+                    </p>
+                    <p className="text-[10px] text-slate-400 mt-0.5 font-bold tracking-widest">
+                      {user.joinedDate
+                        ? new Date(user.joinedDate).toLocaleDateString('vi-VN')
+                        : 'N/A'}
+                    </p>
                   </td>
                   <td className="px-8 py-5">
                     <div className="flex flex-col gap-1">
-                      <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{user.className || '—'}</span>
-                      <span className="text-[10px] font-bold text-slate-400 uppercase">{user.grade || '—'}</span>
+                      <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                        {user.className || '—'}
+                      </span>
+                      <span className="text-[10px] font-bold text-slate-400 uppercase">
+                        {user.grade || '—'}
+                      </span>
                     </div>
                   </td>
                   <td className="px-8 py-5">
                     <div className="flex flex-col gap-1">
-                      <span className="text-xs font-bold text-slate-700 dark:text-slate-300 truncate max-w-[150px]">{user.school || '—'}</span>
-                      <span className="text-[10px] font-bold text-slate-400 uppercase truncate max-w-[150px]">{user.department || '—'}</span>
+                      <span className="text-xs font-bold text-slate-700 dark:text-slate-300 truncate max-w-[150px]">
+                        {user.school || '—'}
+                      </span>
+                      <span className="text-[10px] font-bold text-slate-400 uppercase truncate max-w-[150px]">
+                        {user.department || '—'}
+                      </span>
                     </div>
                   </td>
                   <td className="px-8 py-5">
-                    <span className={cn(
-                      "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border shadow-sm",
-                      user.status === 'Active' 
-                        ? "bg-emerald-50 text-emerald-700 border-emerald-100" 
-                        : user.status === 'Pending'
-                        ? "bg-warning-50 text-warning-700 border-warning-100 animate-pulse"
-                        : "bg-slate-100 text-slate-600 border-slate-200"
-                    )}>
+                    <span
+                      className={cn(
+                        'px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border shadow-sm',
+                        user.status === 'Active'
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
+                          : user.status === 'Pending'
+                            ? 'bg-warning-50 text-warning-700 border-warning-100 animate-pulse'
+                            : 'bg-slate-100 text-slate-600 border-slate-200',
+                      )}
+                    >
                       {user.status}
                     </span>
                   </td>
@@ -526,12 +636,12 @@ export function UserManagement() {
                         disabled={actionLoadingId === user.id}
                         onClick={() => handleToggleLock(user)}
                         className={cn(
-                          "p-2.5 rounded-xl transition-all",
-                          user.status === 'Locked' 
-                            ? "text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20" 
-                            : "text-warning-500 hover:bg-warning-50 dark:hover:bg-warning-900/20"
+                          'p-2.5 rounded-xl transition-all',
+                          user.status === 'Locked'
+                            ? 'text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20'
+                            : 'text-warning-500 hover:bg-warning-50 dark:hover:bg-warning-900/20',
                         )}
-                        title={user.status === 'Locked' ? "Mở khóa" : "Khóa tài khoản"}
+                        title={user.status === 'Locked' ? 'Mở khóa' : 'Khóa tài khoản'}
                       >
                         <Lock className="w-4 h-4" />
                       </button>
@@ -561,9 +671,15 @@ export function UserManagement() {
               <ChevronLeft className="w-5 h-5" />
             </button>
             <div className="flex gap-1">
-                <button className="w-10 h-10 flex items-center justify-center rounded-xl bg-brand-500 text-white text-xs font-black shadow-lg shadow-brand-500/30">1</button>
-                <button className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-white dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 text-xs font-bold transition-all">2</button>
-                <button className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-white dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 text-xs font-bold transition-all">3</button>
+              <button className="w-10 h-10 flex items-center justify-center rounded-xl bg-brand-500 text-white text-xs font-black shadow-lg shadow-brand-500/30">
+                1
+              </button>
+              <button className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-white dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 text-xs font-bold transition-all">
+                2
+              </button>
+              <button className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-white dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 text-xs font-bold transition-all">
+                3
+              </button>
             </div>
             <button className="p-2 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-400 hover:bg-white dark:hover:bg-slate-800 transition-all">
               <ChevronRight className="w-5 h-5" />
@@ -574,17 +690,24 @@ export function UserManagement() {
 
       {isCreateOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => setIsCreateOpen(false)} />
+          <div
+            className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300"
+            onClick={() => setIsCreateOpen(false)}
+          />
           <div className="bg-white dark:bg-slate-900 rounded-4xl shadow-2xl max-w-lg w-full relative z-10 overflow-hidden animate-in zoom-in-95 duration-300">
             <div className="bg-gradient-brand p-8 text-white">
               <h2 className="text-2xl font-black tracking-tight">Thêm người dùng mới</h2>
-              <p className="text-blue-100 text-sm mt-1 font-medium">Tạo tài khoản giáo viên hoặc học sinh</p>
+              <p className="text-blue-100 text-sm mt-1 font-medium">
+                Tạo tài khoản giáo viên hoặc học sinh
+              </p>
             </div>
-            
+
             <form className="p-8 space-y-6" onSubmit={handleCreateUser}>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Họ tên</label>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">
+                    Họ tên
+                  </label>
                   <input
                     type="text"
                     required
@@ -595,7 +718,9 @@ export function UserManagement() {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Vai trò</label>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">
+                    Vai trò
+                  </label>
                   <select
                     value={createForm.role}
                     onChange={(e) => setCreateForm({ ...createForm, role: e.target.value })}
@@ -608,7 +733,9 @@ export function UserManagement() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Email đăng nhập</label>
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">
+                  Email đăng nhập
+                </label>
                 <input
                   type="email"
                   required
@@ -620,7 +747,9 @@ export function UserManagement() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Mật khẩu tạm</label>
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">
+                  Mật khẩu tạm
+                </label>
                 <input
                   type="password"
                   required
@@ -633,7 +762,9 @@ export function UserManagement() {
 
               <div className="grid grid-cols-2 gap-6">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Khối lớp</label>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">
+                    Khối lớp
+                  </label>
                   <input
                     type="text"
                     value={createForm.grade}
@@ -643,7 +774,9 @@ export function UserManagement() {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Tên lớp</label>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">
+                    Tên lớp
+                  </label>
                   <input
                     type="text"
                     value={createForm.className}
@@ -683,4 +816,3 @@ export function UserManagement() {
     </div>
   );
 }
-

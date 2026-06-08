@@ -38,7 +38,7 @@ const markAllAsRead = async (req, res) => {
   try {
     await Notification.updateMany(
       { recipient: req.user._id, isRead: false },
-      { $set: { isRead: true } }
+      { $set: { isRead: true } },
     );
 
     res.json({ message: 'Đã đánh dấu tất cả thông báo là đã đọc' });

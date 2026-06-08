@@ -19,9 +19,18 @@ const userSchema = new mongoose.Schema(
       required: true,
       minlength: 6,
     },
-    phone: {
+    authProvider: {
       type: String,
-      required: true,
+      enum: ['local', 'google'],
+      default: 'local',
+    },
+    googleId: {
+      type: String,
+      default: null,
+    },
+    avatarUrl: {
+      type: String,
+      default: '',
       trim: true,
     },
     role: {
@@ -36,34 +45,23 @@ const userSchema = new mongoose.Schema(
     },
     grade: {
       type: String,
-      required: true,
+      default: '',
       trim: true,
     },
     className: {
       type: String,
-      required: true,
+      default: '',
       trim: true,
     },
     school: {
       type: String,
-      required: true,
+      default: '',
       trim: true,
     },
     department: {
       type: String,
-      trim: true,
-    },
-    address: {
-      type: String,
-      trim: true,
       default: '',
-    },
-    dateOfBirth: {
-      type: Date,
-    },
-    gender: {
-      type: String,
-      enum: ['male', 'female', 'other'],
+      trim: true,
     },
     teachingGrades: {
       type: [String],
@@ -92,7 +90,7 @@ userSchema.pre('save', async function () {
 });
 
 // Compare password method
-userSchema.methods.comparePassword = async function(candidatePassword) {
+userSchema.methods.comparePassword = async function (candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
 };
 

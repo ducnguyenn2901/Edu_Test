@@ -44,7 +44,8 @@ export function CreateClassModal({ isOpen, onClose, onClassCreated, classroom })
       onClassCreated(); // Refresh list in parent
       onClose();
     } catch (err) {
-      const errorMsg = err.response?.data?.message || (classroom ? 'Cập nhật thất bại.' : 'Tạo lớp học thất bại.');
+      const errorMsg =
+        err.response?.data?.message || (classroom ? 'Cập nhật thất bại.' : 'Tạo lớp học thất bại.');
       showToast({ type: 'error', message: errorMsg });
     } finally {
       setIsSubmitting(false);
@@ -55,18 +56,28 @@ export function CreateClassModal({ isOpen, onClose, onClassCreated, classroom })
     <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-center items-center animate-in fade-in-25">
       <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl p-8 m-4 max-w-md w-full transform transition-all animate-in zoom-in-95 slide-in-from-bottom-4">
         <div className="flex justify-between items-start">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{classroom ? 'Chỉnh sửa lớp học' : 'Tạo lớp học mới'}</h2>
-          <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+            {classroom ? 'Chỉnh sửa lớp học' : 'Tạo lớp học mới'}
+          </h2>
+          <button
+            onClick={onClose}
+            className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full"
+          >
             <X className="w-6 h-6" />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
           <div>
-            <label htmlFor="className" className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1.5">Tên lớp học <span className="text-red-500">*</span></label>
-            <input 
-              type="text" 
-              id="className" 
+            <label
+              htmlFor="className"
+              className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1.5"
+            >
+              Tên lớp học <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              id="className"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Ví dụ: Lớp 12A1 - Nâng cao"
@@ -74,8 +85,18 @@ export function CreateClassModal({ isOpen, onClose, onClassCreated, classroom })
             />
           </div>
           <div>
-            <label htmlFor="grade" className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1.5">Khối lớp</label>
-            <select id="grade" value={grade} onChange={(e) => setGrade(e.target.value)} className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none dark:text-white">
+            <label
+              htmlFor="grade"
+              className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1.5"
+            >
+              Khối lớp
+            </label>
+            <select
+              id="grade"
+              value={grade}
+              onChange={(e) => setGrade(e.target.value)}
+              className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none dark:text-white"
+            >
               <option>Khối 6</option>
               <option>Khối 7</option>
               <option>Khối 8</option>
@@ -88,8 +109,18 @@ export function CreateClassModal({ isOpen, onClose, onClassCreated, classroom })
             </select>
           </div>
           <div>
-            <label htmlFor="subject" className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1.5">Môn học</label>
-            <select id="subject" value={subject} onChange={(e) => setSubject(e.target.value)} className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none dark:text-white">
+            <label
+              htmlFor="subject"
+              className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1.5"
+            >
+              Môn học
+            </label>
+            <select
+              id="subject"
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+              className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none dark:text-white"
+            >
               <option>Toán học</option>
               <option>Vật lý</option>
               <option>Hóa học</option>
@@ -105,9 +136,19 @@ export function CreateClassModal({ isOpen, onClose, onClassCreated, classroom })
             </select>
           </div>
           <div className="flex justify-end gap-3 pt-4">
-            <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-slate-400 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700">Hủy bỏ</button>
-            <button type="submit" disabled={isSubmitting} className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2">
-              {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />} 
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-slate-400 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700"
+            >
+              Hủy bỏ
+            </button>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
+            >
+              {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
               {isSubmitting ? 'Đang lưu...' : classroom ? 'Lưu thay đổi' : 'Tạo lớp'}
             </button>
           </div>

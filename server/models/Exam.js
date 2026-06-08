@@ -14,6 +14,11 @@ const examSchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
+    price: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
     startAt: {
       type: Date,
     },
@@ -25,6 +30,15 @@ const examSchema = new mongoose.Schema(
     },
     tags: [String],
     description: String,
+    files: [
+      {
+        filename: String,
+        originalName: String,
+        path: String,
+        mimetype: String,
+        size: Number,
+      },
+    ],
     questions: [
       {
         type: mongoose.Schema.Types.ObjectId,
@@ -76,6 +90,15 @@ const examSchema = new mongoose.Schema(
       enum: ['Draft', 'Published', 'Archived'],
       default: 'Draft',
     },
+    examType: {
+      type: String,
+      enum: ['Standard', 'Interactive', 'Competency', 'Matrix'],
+      default: 'Standard',
+    },
+    competencyStructure: {
+      type: mongoose.Schema.Types.Mixed,
+      default: null,
+    },
     maxAttempts: {
       type: Number,
       default: null,
@@ -123,6 +146,11 @@ const examSchema = new mongoose.Schema(
     createdBy: {
       type: String, // Can be ObjectId if we have User model
       default: 'Admin',
+    },
+    folder: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'ExamFolder',
+      default: null,
     },
     isTemplate: {
       type: Boolean,

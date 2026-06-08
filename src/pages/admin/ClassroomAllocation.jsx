@@ -1,5 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import { Search, Filter, Users, GraduationCap, School, ChevronRight, UploadCloud, Loader2, Check } from 'lucide-react';
+import {
+  Search,
+  Filter,
+  Users,
+  GraduationCap,
+  School,
+  ChevronRight,
+  UploadCloud,
+  Loader2,
+  Check,
+} from 'lucide-react';
 import { adminApi, teacherApi, classroomApi } from '../../services/api';
 import { cn } from '../../lib/utils';
 import { useToast } from '../../context/ToastContext.jsx';
@@ -62,10 +72,10 @@ export function ClassroomAllocation() {
         });
         const studentList = res.data || [];
         setStudents(studentList);
-        
+
         // Initialize selectedStudentIds from teacher's students array
         const teacherAssignedIds = new Set(
-          (selectedTeacher.students || []).map(id => id.toString() || id)
+          (selectedTeacher.students || []).map((id) => id.toString() || id),
         );
         setSelectedStudentIds(teacherAssignedIds);
       } catch {
@@ -83,18 +93,15 @@ export function ClassroomAllocation() {
     setIsSaving(true);
     const newStudentIds = Array.from(selectedStudentIds);
     try {
-      await teacherApi.updateStudents(
-        selectedTeacher.id,
-        newStudentIds,
-      );
-      
+      await teacherApi.updateStudents(selectedTeacher.id, newStudentIds);
+
       // Update local teachers list with new allocation
-      setTeachers(prev => prev.map(t => 
-        t.id === selectedTeacher.id ? { ...t, students: newStudentIds } : t
-      ));
-      
+      setTeachers((prev) =>
+        prev.map((t) => (t.id === selectedTeacher.id ? { ...t, students: newStudentIds } : t)),
+      );
+
       // Update selectedTeacher with new allocation
-      setSelectedTeacher(prev => ({ ...prev, students: newStudentIds }));
+      setSelectedTeacher((prev) => ({ ...prev, students: newStudentIds }));
 
       showToast({
         type: 'success',
@@ -127,28 +134,18 @@ export function ClassroomAllocation() {
   const filteredTeachers = teachers.filter((t) => {
     const term = filters.teacherSearch.trim().toLowerCase();
     if (!term) return true;
-    return (
-      t.name.toLowerCase().includes(term) ||
-      t.email.toLowerCase().includes(term)
-    );
+    return t.name.toLowerCase().includes(term) || t.email.toLowerCase().includes(term);
   });
 
   const filteredStudents = students.filter((s) => {
     const term = filters.studentSearch.trim().toLowerCase();
     if (!term) return true;
-    return (
-      s.name.toLowerCase().includes(term) ||
-      s.email.toLowerCase().includes(term)
-    );
+    return s.name.toLowerCase().includes(term) || s.email.toLowerCase().includes(term);
   });
 
   const grades = Array.from(new Set(students.map((s) => s.grade).filter(Boolean)));
-  const classes = Array.from(
-    new Set(students.map((s) => s.className).filter(Boolean)),
-  );
-  const schools = Array.from(
-    new Set(students.map((s) => s.school).filter(Boolean)),
-  );
+  const classes = Array.from(new Set(students.map((s) => s.className).filter(Boolean)));
+  const schools = Array.from(new Set(students.map((s) => s.school).filter(Boolean)));
 
   return (
     <div className="space-y-6">
@@ -159,9 +156,7 @@ export function ClassroomAllocation() {
             <span>/</span>
             <span>Classroom / Student Allocation</span>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">
-            Phân bổ học sinh cho giáo viên
-          </h1>
+          <h1 className="text-2xl font-bold text-gray-900">Phân bổ học sinh cho giáo viên</h1>
           <p className="text-sm text-gray-500 mt-1">
             Chọn giáo viên ở cột trái, xem và lọc danh sách học sinh ở cột phải.
           </p>
@@ -207,11 +202,7 @@ export function ClassroomAllocation() {
               }}
             />
           </label>
-          {importing && (
-            <span className="text-xs text-gray-500">
-              Đang xử lý file import...
-            </span>
-          )}
+          {importing && <span className="text-xs text-gray-500">Đang xử lý file import...</span>}
         </div>
       </div>
 
@@ -220,9 +211,7 @@ export function ClassroomAllocation() {
           <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Users className="w-4 h-4 text-blue-600" />
-              <h2 className="text-sm font-semibold text-gray-900">
-                Danh sách giáo viên
-              </h2>
+              <h2 className="text-sm font-semibold text-gray-900">Danh sách giáo viên</h2>
             </div>
           </div>
           <div className="p-3 border-b border-gray-100">
@@ -245,13 +234,9 @@ export function ClassroomAllocation() {
 
           <div className="flex-1 overflow-y-auto">
             {loadingTeachers ? (
-              <div className="p-4 text-sm text-gray-500">
-                Đang tải danh sách giáo viên...
-              </div>
+              <div className="p-4 text-sm text-gray-500">Đang tải danh sách giáo viên...</div>
             ) : filteredTeachers.length === 0 ? (
-              <div className="p-4 text-sm text-gray-500">
-                Không tìm thấy giáo viên phù hợp.
-              </div>
+              <div className="p-4 text-sm text-gray-500">Không tìm thấy giáo viên phù hợp.</div>
             ) : (
               <ul className="divide-y divide-gray-100">
                 {filteredTeachers.map((teacher) => (
@@ -273,9 +258,7 @@ export function ClassroomAllocation() {
                           <p className="text-sm font-medium text-gray-900 truncate">
                             {teacher.name}
                           </p>
-                          <p className="text-xs text-gray-500 truncate">
-                            {teacher.email}
-                          </p>
+                          <p className="text-xs text-gray-500 truncate">{teacher.email}</p>
                         </div>
                       </div>
                       <ChevronRight className="w-4 h-4 text-gray-400" />
@@ -293,9 +276,7 @@ export function ClassroomAllocation() {
               <GraduationCap className="w-4 h-4 text-emerald-600" />
               <div className="flex items-center gap-4 flex-1">
                 <div className="flex flex-col">
-                  <h2 className="text-sm font-semibold text-gray-900">
-                    Học sinh theo giáo viên
-                  </h2>
+                  <h2 className="text-sm font-semibold text-gray-900">Học sinh theo giáo viên</h2>
                   <p className="text-xs text-gray-500">
                     {selectedTeacher
                       ? `Giáo viên: ${selectedTeacher.name} (${selectedTeacher.email})`
@@ -323,19 +304,14 @@ export function ClassroomAllocation() {
               <div className="flex items-center gap-1">
                 <Users className="w-3 h-3" />
                 <span>
-                  Tổng:{' '}
-                  <span className="font-semibold text-gray-900">
-                    {students.length}
-                  </span>
+                  Tổng: <span className="font-semibold text-gray-900">{students.length}</span>
                 </span>
               </div>
               <div className="flex items-center gap-1">
                 <School className="w-3 h-3" />
                 <span>
                   Đã chọn:{' '}
-                  <span className="font-semibold text-gray-900">
-                    {selectedStudentIds.size}
-                  </span>
+                  <span className="font-semibold text-gray-900">{selectedStudentIds.size}</span>
                 </span>
               </div>
             </div>
@@ -366,9 +342,7 @@ export function ClassroomAllocation() {
             <div className="flex flex-wrap gap-3">
               <select
                 value={filters.grade}
-                onChange={(e) =>
-                  setFilters((prev) => ({ ...prev, grade: e.target.value }))
-                }
+                onChange={(e) => setFilters((prev) => ({ ...prev, grade: e.target.value }))}
                 className="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">Tất cả khối</option>
@@ -397,9 +371,7 @@ export function ClassroomAllocation() {
               </select>
               <select
                 value={filters.school}
-                onChange={(e) =>
-                  setFilters((prev) => ({ ...prev, school: e.target.value }))
-                }
+                onChange={(e) => setFilters((prev) => ({ ...prev, school: e.target.value }))}
                 className="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">Tất cả trường</option>
@@ -421,15 +393,11 @@ export function ClassroomAllocation() {
             {importResult && (
               <div className="px-6 py-3 text-xs text-emerald-700 border-b border-emerald-100 bg-emerald-50/70">
                 <p className="font-medium">
-                  {importResult.message ||
-                    'Import lớp học và học sinh thành công.'}
+                  {importResult.message || 'Import lớp học và học sinh thành công.'}
                 </p>
                 <p className="mt-1">
                   Đã xử lý{' '}
-                  <span className="font-semibold">
-                    {importResult.classrooms?.length || 0}
-                  </span>{' '}
-                  lớp.
+                  <span className="font-semibold">{importResult.classrooms?.length || 0}</span> lớp.
                 </p>
               </div>
             )}
@@ -441,15 +409,11 @@ export function ClassroomAllocation() {
                       type="checkbox"
                       checked={
                         filteredStudents.length > 0 &&
-                        filteredStudents.every((s) =>
-                          selectedStudentIds.has(s.id),
-                        )
+                        filteredStudents.every((s) => selectedStudentIds.has(s.id))
                       }
                       onChange={(e) => {
                         if (e.target.checked) {
-                          setSelectedStudentIds(
-                            new Set(filteredStudents.map((s) => s.id)),
-                          );
+                          setSelectedStudentIds(new Set(filteredStudents.map((s) => s.id)));
                         } else {
                           setSelectedStudentIds(new Set());
                         }
@@ -466,26 +430,18 @@ export function ClassroomAllocation() {
               <tbody className="divide-y divide-gray-100">
                 {!selectedTeacher && (
                   <tr>
-                    <td
-                      colSpan={6}
-                      className="px-6 py-6 text-center text-sm text-gray-500"
-                    >
+                    <td colSpan={6} className="px-6 py-6 text-center text-sm text-gray-500">
                       Vui lòng chọn một giáo viên để xem danh sách học sinh.
                     </td>
                   </tr>
                 )}
-                {selectedTeacher &&
-                  !loadingStudents &&
-                  filteredStudents.length === 0 && (
-                    <tr>
-                      <td
-                        colSpan={6}
-                        className="px-6 py-6 text-center text-sm text-gray-500"
-                      >
-                        Không có học sinh nào phù hợp với bộ lọc hiện tại.
-                      </td>
-                    </tr>
-                  )}
+                {selectedTeacher && !loadingStudents && filteredStudents.length === 0 && (
+                  <tr>
+                    <td colSpan={6} className="px-6 py-6 text-center text-sm text-gray-500">
+                      Không có học sinh nào phù hợp với bộ lọc hiện tại.
+                    </td>
+                  </tr>
+                )}
                 {selectedTeacher &&
                   !loadingStudents &&
                   filteredStudents.map((student) => (
@@ -505,24 +461,16 @@ export function ClassroomAllocation() {
                             className="w-9 h-9 rounded-full bg-gray-100"
                           />
                           <div>
-                            <p className="font-medium text-sm text-gray-900">
-                              {student.name}
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              {student.email}
-                            </p>
+                            <p className="font-medium text-sm text-gray-900">{student.name}</p>
+                            <p className="text-xs text-gray-500">{student.email}</p>
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-3 text-sm text-gray-600">
-                        {student.grade || '-'}
-                      </td>
+                      <td className="px-6 py-3 text-sm text-gray-600">{student.grade || '-'}</td>
                       <td className="px-6 py-3 text-sm text-gray-600">
                         {student.className || '-'}
                       </td>
-                      <td className="px-6 py-3 text-sm text-gray-600">
-                        {student.school || '-'}
-                      </td>
+                      <td className="px-6 py-3 text-sm text-gray-600">{student.school || '-'}</td>
                       <td className="px-6 py-3 text-sm">
                         <span
                           className={cn(
@@ -532,19 +480,14 @@ export function ClassroomAllocation() {
                               : 'bg-green-50 text-green-700 border-green-200',
                           )}
                         >
-                          {student.status === 'Locked'
-                            ? 'Đã khóa'
-                            : 'Đang hoạt động'}
+                          {student.status === 'Locked' ? 'Đã khóa' : 'Đang hoạt động'}
                         </span>
                       </td>
                     </tr>
                   ))}
                 {selectedTeacher && loadingStudents && (
                   <tr>
-                    <td
-                      colSpan={6}
-                      className="px-6 py-6 text-center text-sm text-gray-500"
-                    >
+                    <td colSpan={6} className="px-6 py-6 text-center text-sm text-gray-500">
                       Đang tải danh sách học sinh...
                     </td>
                   </tr>

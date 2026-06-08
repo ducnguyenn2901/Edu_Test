@@ -76,11 +76,7 @@ export function ExamsManagement() {
         </div>
       </div>
 
-      {error && (
-        <div className="px-4 py-2 rounded-lg bg-red-50 text-red-700 text-sm">
-          {error}
-        </div>
-      )}
+      {error && <div className="px-4 py-2 rounded-lg bg-red-50 text-red-700 text-sm">{error}</div>}
 
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
         <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
@@ -90,9 +86,7 @@ export function ExamsManagement() {
         </div>
         <div className="divide-y divide-gray-100">
           {exams.length === 0 && (
-            <div className="px-6 py-10 text-center text-gray-500 text-sm">
-              Chưa có đề thi nào.
-            </div>
+            <div className="px-6 py-10 text-center text-gray-500 text-sm">Chưa có đề thi nào.</div>
           )}
           {exams.map((exam) => (
             <div
@@ -127,9 +121,7 @@ export function ExamsManagement() {
                   {exam.createdAt && (
                     <span className="inline-flex items-center gap-1">
                       <Calendar className="w-3 h-3" />
-                      <span>
-                        {new Date(exam.createdAt).toLocaleDateString('vi-VN')}
-                      </span>
+                      <span>{new Date(exam.createdAt).toLocaleDateString('vi-VN')}</span>
                     </span>
                   )}
                   {Array.isArray(exam.categories) && exam.categories.length > 0 && (

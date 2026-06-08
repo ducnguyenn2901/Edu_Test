@@ -1,16 +1,49 @@
-# React + Vite
+# EduTest Pro
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## Yêu cầu
 
-Currently, two official plugins are available:
+- Node.js LTS
+- MongoDB (local hoặc Atlas)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Cấu hình môi trường
 
-## React Compiler
+Frontend:
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```bash
+copy .env.example .env
+```
 
-## Expanding the ESLint configuration
+`VITE_API_URL` trỏ tới backend (kèm `/api`), ví dụ:
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+- Local: `http://localhost:5000/api`
+- Prod: `https://your-backend-domain/api`
+
+Backend:
+
+```bash
+copy server\.env.example server\.env
+```
+
+Các biến quan trọng:
+
+- `MONGODB_URI`
+- `JWT_SECRET`
+- `CORS_ORIGIN` (danh sách origin, phân tách bằng dấu phẩy; local thường là `http://localhost:5173`)
+
+## Chạy local
+
+1. Backend
+
+```bash
+cd server
+npm install
+npm run dev
+```
+
+2. Frontend
+
+```bash
+cd ..
+npm install
+npm run dev
+```

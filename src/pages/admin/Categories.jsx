@@ -145,11 +145,7 @@ export function Categories() {
         </button>
       </div>
 
-      {error && (
-        <div className="px-4 py-2 rounded-lg bg-red-50 text-red-700 text-sm">
-          {error}
-        </div>
-      )}
+      {error && <div className="px-4 py-2 rounded-lg bg-red-50 text-red-700 text-sm">{error}</div>}
 
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
         <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
@@ -177,9 +173,7 @@ export function Categories() {
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <p className="font-semibold text-gray-900 text-sm">
-                      {category.name}
-                    </p>
+                    <p className="font-semibold text-gray-900 text-sm">{category.name}</p>
                     {category.subject && (
                       <span className="px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 text-xs">
                         {category.subject}

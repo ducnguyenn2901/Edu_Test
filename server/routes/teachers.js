@@ -9,4 +9,3 @@ router.get('/:id/students', protect, authorize('admin', 'teacher'), getTeacherSt
 router.put('/:id/students', protect, authorize('admin'), updateTeacherStudents);
 
 module.exports = router;
-

@@ -23,11 +23,7 @@ const defaultSettings = [
 
 const ensureDefaults = async () => {
   for (const setting of defaultSettings) {
-    await Setting.updateOne(
-      { key: setting.key },
-      { $setOnInsert: setting },
-      { upsert: true },
-    );
+    await Setting.updateOne({ key: setting.key }, { $setOnInsert: setting }, { upsert: true });
   }
 };
 

@@ -14,4 +14,3 @@ router.put('/:id', protect, authorize('admin', 'teacher'), updateCategory);
 router.delete('/:id', protect, authorize('admin'), deleteCategory);
 
 module.exports = router;
-

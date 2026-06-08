@@ -51,10 +51,7 @@ const getClassrooms = async (req, res) => {
       filter.school = school;
     }
     if (teacherId) {
-      filter.$or = [
-        { homeroomTeacher: teacherId },
-        { teachers: teacherId },
-      ];
+      filter.$or = [{ homeroomTeacher: teacherId }, { teachers: teacherId }];
     }
     if (studentId) {
       filter.students = studentId;
@@ -134,7 +131,7 @@ const joinClassroom = async (req, res) => {
         type: 'student_request',
         title: 'Yêu cầu tham gia lớp học mới',
         message: `Học sinh ${req.user.name} yêu cầu tham gia lớp ${classroom.name}`,
-        link: '/teacher/classrooms'
+        link: '/teacher/classrooms',
       });
     }
 
@@ -156,16 +153,17 @@ const approveStudent = async (req, res) => {
     }
 
     // Verify teacher has permission
-    const isTeacher = classroom.homeroomTeacher.toString() === teacherId.toString() || 
-                      classroom.teachers.map(t => t.toString()).includes(teacherId.toString());
-    
+    const isTeacher =
+      classroom.homeroomTeacher.toString() === teacherId.toString() ||
+      classroom.teachers.map((t) => t.toString()).includes(teacherId.toString());
+
     if (!isTeacher && req.user.role !== 'admin') {
       return res.status(403).json({ message: 'Bạn không có quyền thực hiện thao tác này' });
     }
 
     // Remove from pending
     classroom.pendingStudents = classroom.pendingStudents.filter(
-      (id) => id.toString() !== studentId
+      (id) => id.toString() !== studentId,
     );
 
     if (action === 'approve') {
@@ -182,15 +180,16 @@ const approveStudent = async (req, res) => {
       sender: teacherId,
       type: action === 'approve' ? 'class_approved' : 'warning',
       title: action === 'approve' ? 'Đã được duyệt vào lớp' : 'Yêu cầu vào lớp bị từ chối',
-      message: action === 'approve' 
-        ? `Bạn đã được giáo viên duyệt vào lớp ${classroom.name}`
-        : `Yêu cầu tham gia lớp ${classroom.name} của bạn đã bị từ chối`,
-      link: action === 'approve' ? '/student/dashboard' : null
+      message:
+        action === 'approve'
+          ? `Bạn đã được giáo viên duyệt vào lớp ${classroom.name}`
+          : `Yêu cầu tham gia lớp ${classroom.name} của bạn đã bị từ chối`,
+      link: action === 'approve' ? '/student/dashboard' : null,
     });
 
-    res.json({ 
+    res.json({
       message: action === 'approve' ? 'Đã duyệt học sinh vào lớp' : 'Đã từ chối yêu cầu tham gia',
-      classroom 
+      classroom,
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -211,20 +210,14 @@ const removeStudent = async (req, res) => {
     // Verify teacher has permission
     const isTeacher =
       classroom.homeroomTeacher.toString() === teacherId.toString() ||
-      classroom.teachers
-        .map((t) => t.toString())
-        .includes(teacherId.toString());
+      classroom.teachers.map((t) => t.toString()).includes(teacherId.toString());
 
     if (!isTeacher && req.user.role !== 'admin') {
-      return res
-        .status(403)
-        .json({ message: 'Bạn không có quyền thực hiện thao tác này' });
+      return res.status(403).json({ message: 'Bạn không có quyền thực hiện thao tác này' });
     }
 
     // Remove from students
-    classroom.students = classroom.students.filter(
-      (id) => id.toString() !== studentId,
-    );
+    classroom.students = classroom.students.filter((id) => id.toString() !== studentId);
 
     await classroom.save();
 
@@ -255,9 +248,7 @@ const importStudentsToClassroom = async (req, res) => {
     }
 
     // Look for 'email' or 'studentemail' header
-    const emailHeader = Object.keys(rows[0]).find(
-      (h) => h === 'email' || h === 'studentemail',
-    );
+    const emailHeader = Object.keys(rows[0]).find((h) => h === 'email' || h === 'studentemail');
 
     if (!emailHeader) {
       return res.status(400).json({
@@ -265,9 +256,7 @@ const importStudentsToClassroom = async (req, res) => {
       });
     }
 
-    const emails = rows
-      .map((row) => (row[emailHeader] || '').trim().toLowerCase())
-      .filter(Boolean);
+    const emails = rows.map((row) => (row[emailHeader] || '').trim().toLowerCase()).filter(Boolean);
 
     if (!emails.length) {
       return res.status(400).json({ message: 'Không tìm thấy email nào trong file' });
@@ -279,9 +268,7 @@ const importStudentsToClassroom = async (req, res) => {
     });
 
     const studentIds = students.map((s) => s._id.toString());
-    const existingStudentIds = new Set(
-      classroom.students.map((id) => id.toString()),
-    );
+    const existingStudentIds = new Set(classroom.students.map((id) => id.toString()));
 
     let addedCount = 0;
     studentIds.forEach((sid) => {
@@ -305,8 +292,10 @@ const importStudentsToClassroom = async (req, res) => {
 
 const getClassroomByCode = async (req, res) => {
   try {
-    const classroom = await Classroom.findOne({ code: req.params.code.toUpperCase() })
-      .populate('homeroomTeacher', 'name');
+    const classroom = await Classroom.findOne({ code: req.params.code.toUpperCase() }).populate(
+      'homeroomTeacher',
+      'name',
+    );
 
     if (!classroom) {
       return res.status(404).json({ message: 'Không tìm thấy lớp học' });
@@ -361,15 +350,7 @@ const updateClassroom = async (req, res) => {
       return res.status(404).json({ message: 'Không tìm thấy lớp học' });
     }
 
-    const {
-      name,
-      grade,
-      school,
-      subject,
-      homeroomTeacher,
-      teachers,
-      students,
-    } = req.body;
+    const { name, grade, school, subject, homeroomTeacher, teachers, students } = req.body;
 
     if (name !== undefined) {
       classroom.name = name;
@@ -417,9 +398,7 @@ const assignStudents = async (req, res) => {
       return res.status(400).json({ message: 'studentIds phải là một mảng' });
     }
 
-    const set = new Set(
-      classroom.students.map((id) => id.toString()),
-    );
+    const set = new Set(classroom.students.map((id) => id.toString()));
 
     studentIds.forEach((id) => {
       if (id && !set.has(id)) {
@@ -449,9 +428,7 @@ const assignTeachers = async (req, res) => {
       return res.status(400).json({ message: 'teacherIds phải là một mảng' });
     }
 
-    const set = new Set(
-      classroom.teachers.map((id) => id.toString()),
-    );
+    const set = new Set(classroom.teachers.map((id) => id.toString()));
 
     teacherIds.forEach((id) => {
       if (id && !set.has(id)) {
@@ -479,13 +456,7 @@ const importClasses = async (req, res) => {
       return res.status(400).json({ message: 'File không có dữ liệu' });
     }
 
-    const requiredHeaders = [
-      'school',
-      'grade',
-      'classname',
-      'studentemail',
-      'teacheremail',
-    ];
+    const requiredHeaders = ['school', 'grade', 'classname', 'studentemail', 'teacheremail'];
 
     const missingHeaders = requiredHeaders.filter(
       (key) => !Object.prototype.hasOwnProperty.call(rows[0], key),
@@ -597,18 +568,14 @@ const importClasses = async (req, res) => {
           students: studentsForClass,
         });
       } else {
-        const teacherSet = new Set(
-          classroom.teachers.map((id) => id.toString()),
-        );
+        const teacherSet = new Set(classroom.teachers.map((id) => id.toString()));
         teachersForClass.forEach((id) => {
           if (!teacherSet.has(id.toString())) {
             classroom.teachers.push(id);
           }
         });
 
-        const studentSet = new Set(
-          classroom.students.map((id) => id.toString()),
-        );
+        const studentSet = new Set(classroom.students.map((id) => id.toString()));
         studentsForClass.forEach((id) => {
           if (!studentSet.has(id.toString())) {
             classroom.students.push(id);

@@ -24,9 +24,9 @@ export function JoinClass() {
 
     const fetchClassroomByCode = async () => {
       try {
-        const response = await classroomApi.getByCode(code); 
+        const response = await classroomApi.getByCode(code);
         setClassroom(response.data);
-      } catch (err) {
+      } catch {
         setError('Mã lớp học không hợp lệ hoặc không tồn tại.');
       } finally {
         setLoading(false);
@@ -61,7 +61,12 @@ export function JoinClass() {
           <XCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
           <h2 className="text-2xl font-bold text-gray-800">Yêu cầu thất bại</h2>
           <p className="text-gray-600 mt-2">{error}</p>
-          <button onClick={() => navigate('/')} className="mt-6 px-6 py-2 bg-blue-600 text-white rounded-lg">Trở về trang chủ</button>
+          <button
+            onClick={() => navigate('/')}
+            className="mt-6 px-6 py-2 bg-blue-600 text-white rounded-lg"
+          >
+            Trở về trang chủ
+          </button>
         </div>
       );
     }
@@ -74,15 +79,21 @@ export function JoinClass() {
           <p className="text-gray-600 mt-4">Bạn sắp gửi yêu cầu tham gia vào lớp:</p>
           <div className="my-6 p-6 bg-gray-50 rounded-lg border">
             <p className="text-2xl font-bold text-blue-700">{classroom.name}</p>
-            <p className="text-gray-500 mt-1">{classroom.grade} • {classroom.subject}</p>
+            <p className="text-gray-500 mt-1">
+              {classroom.grade} • {classroom.subject}
+            </p>
             <p className="text-gray-500 mt-1">Giáo viên: {classroom.homeroomTeacher?.name}</p>
           </div>
-          <button 
+          <button
             onClick={handleJoin}
             disabled={isSubmitting}
             className="w-full max-w-xs mx-auto px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold text-lg disabled:opacity-50"
           >
-            {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : 'Gửi yêu cầu tham gia'}
+            {isSubmitting ? (
+              <Loader2 className="w-5 h-5 animate-spin mx-auto" />
+            ) : (
+              'Gửi yêu cầu tham gia'
+            )}
           </button>
         </div>
       );
@@ -93,9 +104,7 @@ export function JoinClass() {
 
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
-      <div className="max-w-lg w-full bg-white rounded-2xl shadow-xl p-8">
-        {renderContent()}
-      </div>
+      <div className="max-w-lg w-full bg-white rounded-2xl shadow-xl p-8">{renderContent()}</div>
     </div>
   );
 }

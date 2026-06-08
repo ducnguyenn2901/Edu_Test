@@ -1,18 +1,28 @@
 const express = require('express');
 const router = express.Router();
-const chatController = require('../controllers/chatController');
 const { protect } = require('../middleware/auth');
+const {
+  sendMessage,
+  getCommunityMessages,
+  getTeacherStudentMessages,
+  getStudentStudentMessages,
+  getParticipants,
+  pinMessage,
+  getPinnedMessages,
+  toggleReaction,
+  markAsSeen,
+  getStats,
+} = require('../controllers/chatController');
 
-router.use(protect);
-
-router.post('/send', chatController.sendMessage);
-router.get('/community/:classroomId', chatController.getCommunityMessages);
-router.get('/teacher-student/:classroomId/:recipientId', chatController.getTeacherStudentMessages);
-router.get('/student-student/:classroomId/:recipientId', chatController.getStudentStudentMessages);
-router.get('/participants/:classroomId', chatController.getChatParticipants);
-router.put('/pin/:messageId', chatController.pinMessage);
-router.get('/pinned/:classroomId', chatController.getPinnedMessages);
-router.post('/reaction/:messageId', chatController.toggleReaction);
-router.put('/seen/:messageId', chatController.markAsSeen);
+router.post('/send', protect, sendMessage);
+router.get('/community/:classroomId', protect, getCommunityMessages);
+router.get('/teacher-student/:classroomId/:recipientId', protect, getTeacherStudentMessages);
+router.get('/student-student/:classroomId/:recipientId', protect, getStudentStudentMessages);
+router.get('/participants/:classroomId', protect, getParticipants);
+router.get('/stats/:classroomId', protect, getStats);
+router.post('/pin/:messageId', protect, pinMessage);
+router.get('/pinned/:classroomId', protect, getPinnedMessages);
+router.post('/reaction/:messageId', protect, toggleReaction);
+router.post('/seen/:messageId', protect, markAsSeen);
 
 module.exports = router;

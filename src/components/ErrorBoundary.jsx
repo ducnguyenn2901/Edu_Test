@@ -14,9 +14,9 @@ class ErrorBoundary extends React.Component {
   componentDidCatch(error, errorInfo) {
     this.setState({
       error: error,
-      errorInfo: errorInfo
+      errorInfo: errorInfo,
     });
-    console.error("ErrorBoundary caught an error", error, errorInfo);
+    console.error('ErrorBoundary caught an error', error, errorInfo);
   }
 
   render() {
@@ -28,11 +28,12 @@ class ErrorBoundary extends React.Component {
           </div>
           <h2 className="text-xl font-bold text-gray-900 mb-2">Đã xảy ra lỗi!</h2>
           <p className="text-gray-600 mb-6 max-w-md">
-            Hệ thống gặp sự cố khi tải thành phần này. Vui lòng thử tải lại trang hoặc liên hệ quản trị viên.
+            Hệ thống gặp sự cố khi tải thành phần này. Vui lòng thử tải lại trang hoặc liên hệ quản
+            trị viên.
           </p>
-          
+
           <div className="flex gap-3">
-             <button
+            <button
               onClick={() => window.location.reload()}
               className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors shadow-sm"
             >

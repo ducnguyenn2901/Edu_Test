@@ -1,12 +1,33 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Plus, Search, MoreHorizontal, Loader2, AlertTriangle, Download, Upload, Trash2, Edit, Eye, Filter, BookOpen, GraduationCap, Layers, ChevronRight, FileDown, FileUp, Clock } from 'lucide-react';
+import {
+  Plus,
+  Search,
+  MoreHorizontal,
+  Loader2,
+  AlertTriangle,
+  Download,
+  Upload,
+  Trash2,
+  Edit,
+  Eye,
+  Filter,
+  BookOpen,
+  GraduationCap,
+  Layers,
+  ChevronRight,
+  FileDown,
+  FileUp,
+  Clock,
+} from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { cn } from '../../lib/utils';
 import { questionApi } from '../../services/api';
 import { useToast } from '../../context/ToastContext.jsx';
 import { ConfirmModal } from '../../components/common/ConfirmModal.jsx';
+import katex from 'katex';
+import 'katex/dist/katex.css';
 
-function DropdownMenu({ question, onDelete }) {
+function DropdownMenu({ question, onDelete, onTogglePublic }) {
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
   const menuRef = useRef(null);
@@ -23,23 +44,52 @@ function DropdownMenu({ question, onDelete }) {
 
   return (
     <div className="relative inline-block text-left" ref={menuRef}>
-      <button onClick={() => setIsOpen(!isOpen)} className="p-2.5 text-gray-400 hover:text-brand hover:bg-brand/5 rounded-xl transition-all active:scale-90">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="p-2.5 text-gray-400 hover:text-brand hover:bg-brand/5 rounded-xl transition-all active:scale-90"
+      >
         <MoreHorizontal className="w-5 h-5" />
       </button>
 
       {isOpen && (
         <div className="origin-top-right absolute right-0 mt-2 w-56 rounded-2xl shadow-2xl bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 z-50 py-2 animate-in fade-in zoom-in-95 duration-200">
           <div className="px-4 py-2 mb-1">
-             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Thao tác câu hỏi</p>
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+              Thao tác câu hỏi
+            </p>
           </div>
-          <button onClick={() => navigate(`/teacher/questions/edit/${question._id}`)} className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-gray-700 dark:text-slate-300 hover:bg-brand/5 hover:text-brand transition-colors">
+          <button
+            onClick={() => navigate(`/teacher/questions/edit/${question._id}`)}
+            className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-gray-700 dark:text-slate-300 hover:bg-brand/5 hover:text-brand transition-colors"
+          >
             <Edit className="w-4 h-4" /> Chỉnh sửa nội dung
           </button>
-          <button onClick={() => {/* View logic */}} className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-gray-700 dark:text-slate-300 hover:bg-brand/5 hover:text-brand transition-colors">
+          <button
+            onClick={() => {
+              /* View logic */
+            }}
+            className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-gray-700 dark:text-slate-300 hover:bg-brand/5 hover:text-brand transition-colors"
+          >
             <Eye className="w-4 h-4" /> Xem chi tiết câu
           </button>
+          <button
+            onClick={() => {
+              onTogglePublic(question);
+              setIsOpen(false);
+            }}
+            className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-indigo-600 hover:bg-indigo-50 transition-colors"
+          >
+            <BookOpen className="w-4 h-4" />{' '}
+            {question.isPublic ? 'Xóa khỏi ngân hàng chung' : 'Đưa vào ngân hàng chung'}
+          </button>
           <div className="border-t border-gray-50 dark:border-slate-700 my-2"></div>
-          <button onClick={() => { onDelete(question._id); setIsOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-rose-600 hover:bg-rose-50 transition-colors">
+          <button
+            onClick={() => {
+              onDelete(question._id);
+              setIsOpen(false);
+            }}
+            className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-rose-600 hover:bg-rose-50 transition-colors"
+          >
             <Trash2 className="w-4 h-4" /> Xóa khỏi hệ thống
           </button>
         </div>
@@ -51,10 +101,18 @@ function DropdownMenu({ question, onDelete }) {
 export function QuestionBank() {
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [search, setSearch] = useState('');
-  const [filters, setFilters] = useState({ type: '', difficulty: '', subject: '', grade: '' });
+  const [filters, setFilters] = useState({
+    type: '',
+    difficulty: '',
+    subject: '',
+    grade: '',
+    source: 'all',
+  });
   const [onlyNeedsReview, setOnlyNeedsReview] = useState(false);
+  const [selectedIds, setSelectedIds] = useState(new Set());
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [deleteType, setDeleteType] = useState('single'); // 'single' or 'bulk'
   const { showToast } = useToast();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [questionToDelete, setQuestionToDelete] = useState(null);
@@ -62,44 +120,120 @@ export function QuestionBank() {
   const fetchQuestions = async () => {
     try {
       setLoading(true);
-      const response = await questionApi.getAll({ 
-        search: search || undefined, 
-        type: filters.type || undefined, 
-        difficulty: filters.difficulty || undefined, 
-        subject: filters.subject || undefined, 
+      const response = await questionApi.getAll({
+        search: search || undefined,
+        type: filters.type || undefined,
+        difficulty: filters.difficulty || undefined,
+        subject: filters.subject || undefined,
         grade: filters.grade || undefined,
-        needsReview: onlyNeedsReview ? 'true' : undefined 
+        needsReview: onlyNeedsReview ? 'true' : undefined,
+        source: filters.source,
       });
       setQuestions(response.data || []);
-    } catch (err) {
-      console.error('Failed to fetch questions:', err);
-      setError('Không thể tải danh sách câu hỏi. Vui lòng thử lại sau.');
+    } catch (_err) {
+      console.error('Failed to fetch questions:', _err);
+      showToast({
+        type: 'error',
+        title: 'Lỗi',
+        message: 'Không thể tải danh sách câu hỏi. Vui lòng thử lại sau.',
+      });
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    const timer = setTimeout(() => { fetchQuestions(); }, 500);
+    const timer = setTimeout(() => {
+      fetchQuestions();
+    }, 500);
     return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search, filters, onlyNeedsReview]);
 
   const openDeleteModal = (id) => {
     setQuestionToDelete(id);
+    setDeleteType('single');
+    setIsModalOpen(true);
+  };
+
+  const openBulkDeleteModal = () => {
+    if (selectedIds.size === 0) {
+      showToast({
+        type: 'warning',
+        title: 'Chưa chọn câu hỏi',
+        message: 'Vui lòng chọn ít nhất một câu hỏi để xóa.',
+      });
+      return;
+    }
+    setDeleteType('bulk');
     setIsModalOpen(true);
   };
 
   const confirmDelete = async () => {
-    if (!questionToDelete) return;
     try {
-      await questionApi.delete(questionToDelete);
-      setQuestions(prev => prev.filter(q => q._id !== questionToDelete));
-      showToast({ type: 'success', title: 'Thành công', message: 'Đã xóa câu hỏi thành công.' });
+      if (deleteType === 'single') {
+        if (!questionToDelete) return;
+        await questionApi.delete(questionToDelete);
+        setQuestions((prev) => prev.filter((q) => q._id !== questionToDelete));
+        showToast({ type: 'success', title: 'Thành công', message: 'Đã xóa câu hỏi thành công.' });
+      } else if (deleteType === 'bulk') {
+        const idsArray = Array.from(selectedIds);
+        await questionApi.deleteBulk(idsArray);
+        setQuestions((prev) => prev.filter((q) => !selectedIds.has(q._id)));
+        setSelectedIds(new Set());
+        showToast({ 
+          type: 'success', 
+          title: 'Thành công', 
+          message: `Đã xóa ${selectedIds.size} câu hỏi thành công.` 
+        });
+      }
     } catch (err) {
-      showToast({ type: 'error', title: 'Lỗi', message: err.response?.data?.message || 'Không thể xóa câu hỏi.' });
+      showToast({
+        type: 'error',
+        title: 'Lỗi',
+        message: err.response?.data?.message || 'Không thể xóa câu hỏi.',
+      });
     } finally {
       setIsModalOpen(false);
       setQuestionToDelete(null);
+    }
+  };
+
+  const toggleSelectQuestion = (id) => {
+    const newSelected = new Set(selectedIds);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelectedIds(newSelected);
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === questions.length && questions.length > 0) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(questions.map((q) => q._id)));
+    }
+  };
+
+  const togglePublic = async (question) => {
+    try {
+      await questionApi.update(question._id, { isPublic: !question.isPublic });
+      setQuestions((prev) =>
+        prev.map((q) => (q._id === question._id ? { ...q, isPublic: !q.isPublic } : q)),
+      );
+      showToast({
+        type: 'success',
+        title: 'Thành công',
+        message: question.isPublic ? 'Đã xóa khỏi ngân hàng chung' : 'Đã đưa vào ngân hàng chung',
+      });
+    } catch (_err) {
+      showToast({
+        type: 'error',
+        title: 'Lỗi',
+        message: 'Không thể cập nhật trạng thái.',
+      });
     }
   };
 
@@ -113,8 +247,12 @@ export function QuestionBank() {
       document.body.appendChild(link);
       link.click();
       link.remove();
-    } catch (err) {
-      showToast({ type: 'error', title: 'Export thất bại', message: 'Không thể xuất file Excel' });
+    } catch (_err) {
+      showToast({
+        type: 'error',
+        title: 'Export thất bại',
+        message: 'Không thể xuất file Excel',
+      });
     }
   };
 
@@ -123,11 +261,18 @@ export function QuestionBank() {
     if (!file) return;
     try {
       setLoading(true);
-      const res = await questionApi.import(file, { subject: filters.subject, grade: filters.grade });
+      const res = await questionApi.import(file, {
+        subject: filters.subject,
+        grade: filters.grade,
+      });
       showToast({ type: 'success', title: 'Import thành công', message: res.data.message });
       fetchQuestions();
     } catch (err) {
-      showToast({ type: 'error', title: 'Import thất bại', message: err.response?.data?.message || 'Lỗi khi nhập file' });
+      showToast({
+        type: 'error',
+        title: 'Import thất bại',
+        message: err.response?.data?.message || 'Lỗi khi nhập file',
+      });
     } finally {
       setLoading(false);
       e.target.value = '';
@@ -138,38 +283,56 @@ export function QuestionBank() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
         <div className="w-12 h-12 border-4 border-brand/20 border-t-brand rounded-full animate-spin"></div>
-        <p className="text-gray-500 font-medium animate-pulse">Đang truy vấn ngân hàng câu hỏi...</p>
+        <p className="text-gray-500 font-medium animate-pulse">
+          Đang truy vấn ngân hàng câu hỏi...
+        </p>
       </div>
     );
   }
 
   return (
     <>
-      <ConfirmModal 
+      <ConfirmModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onConfirm={confirmDelete}
-        title="Xác nhận xóa câu hỏi"
-        message="Bạn có chắc chắn muốn xóa câu hỏi này? Hành động này không thể hoàn tác và câu hỏi sẽ bị gỡ khỏi mọi bài thi hiện có."
+        title={deleteType === 'bulk' ? 'Xác nhận xóa nhiều câu hỏi' : 'Xác nhận xóa câu hỏi'}
+        message={deleteType === 'bulk' 
+          ? `Bạn có chắc chắn muốn xóa ${selectedIds.size} câu hỏi? Hành động này không thể hoàn tác và các câu hỏi sẽ bị gỡ khỏi mọi bài thi hiện có.`
+          : 'Bạn có chắc chắn muốn xóa câu hỏi này? Hành động này không thể hoàn tác và câu hỏi sẽ bị gỡ khỏi mọi bài thi hiện có.'
+        }
       />
-      
+
       <div className="space-y-8 animate-in fade-in duration-500">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
             <h1 className="text-3xl font-black text-gray-900 tracking-tight">Ngân hàng câu hỏi</h1>
-            <p className="text-gray-500 mt-1 font-medium">Quản lý và tổ chức kho tài liệu giảng dạy của bạn.</p>
+            <p className="text-gray-500 mt-1 font-medium">
+              Quản lý và tổ chức kho tài liệu giảng dạy của bạn.
+            </p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
             <label className="cursor-pointer inline-flex items-center gap-2 px-5 py-2.5 bg-white border border-gray-200 text-gray-700 text-sm font-bold rounded-2xl hover:bg-gray-50 shadow-sm transition-all active:scale-95">
               <Upload className="w-4 h-4 text-blue-600" />
               Import
-              <input type="file" className="hidden" accept=".xlsx,.xls,.csv,.docx" onChange={handleImport} />
+              <input
+                type="file"
+                className="hidden"
+                accept=".xlsx,.xls,.csv,.docx"
+                onChange={handleImport}
+              />
             </label>
-            <button onClick={handleExport} className="inline-flex items-center gap-2 px-5 py-2.5 bg-white border border-gray-200 text-gray-700 text-sm font-bold rounded-2xl hover:bg-gray-50 shadow-sm transition-all active:scale-95">
+            <button
+              onClick={handleExport}
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-white border border-gray-200 text-gray-700 text-sm font-bold rounded-2xl hover:bg-gray-50 shadow-sm transition-all active:scale-95"
+            >
               <Download className="w-4 h-4 text-emerald-600" />
               Export
             </button>
-            <Link to="/teacher/questions/new" className="inline-flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white text-sm font-black rounded-2xl hover:bg-blue-700 shadow-lg shadow-blue-200 transition-all active:scale-95">
+            <Link
+              to="/teacher/questions/new"
+              className="inline-flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white text-sm font-black rounded-2xl hover:bg-blue-700 shadow-lg shadow-blue-200 transition-all active:scale-95"
+            >
               <Plus className="w-4 h-4" />
               Tạo câu hỏi
             </Link>
@@ -181,21 +344,29 @@ export function QuestionBank() {
           <div className="flex flex-wrap gap-4">
             <div className="relative flex-1 min-w-[300px]">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input 
-                type="text" 
-                value={search} 
-                onChange={(e) => setSearch(e.target.value)} 
-                placeholder="Tìm kiếm nội dung, kiến thức..." 
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Tìm kiếm nội dung, kiến thức..."
                 className="w-full pl-12 pr-4 py-3.5 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-500/20 transition-all text-sm font-medium"
               />
             </div>
             <div className="flex flex-wrap gap-3">
-              <select value={filters.type} onChange={(e) => setFilters({...filters, type: e.target.value})} className="px-4 py-3.5 bg-gray-50 border-none rounded-2xl text-sm font-bold text-gray-600 focus:ring-2 focus:ring-blue-500/20 outline-none">
+              <select
+                value={filters.type}
+                onChange={(e) => setFilters({ ...filters, type: e.target.value })}
+                className="px-4 py-3.5 bg-gray-50 border-none rounded-2xl text-sm font-bold text-gray-600 focus:ring-2 focus:ring-blue-500/20 outline-none"
+              >
                 <option value="">Tất cả loại</option>
                 <option value="Trắc nghiệm">Trắc nghiệm</option>
                 <option value="Tự luận">Tự luận</option>
               </select>
-              <select value={filters.subject} onChange={(e) => setFilters({...filters, subject: e.target.value})} className="px-4 py-3.5 bg-gray-50 border-none rounded-2xl text-sm font-bold text-gray-600 focus:ring-2 focus:ring-blue-500/20 outline-none">
+              <select
+                value={filters.subject}
+                onChange={(e) => setFilters({ ...filters, subject: e.target.value })}
+                className="px-4 py-3.5 bg-gray-50 border-none rounded-2xl text-sm font-bold text-gray-600 focus:ring-2 focus:ring-blue-500/20 outline-none"
+              >
                 <option value="">Tất cả môn</option>
                 <option value="Toán học">Toán học</option>
                 <option value="Vật lý">Vật lý</option>
@@ -209,7 +380,11 @@ export function QuestionBank() {
                 <option value="Tin học">Tin học</option>
                 <option value="Công nghệ">Công nghệ</option>
               </select>
-              <select value={filters.grade} onChange={(e) => setFilters({...filters, grade: e.target.value})} className="px-4 py-3.5 bg-gray-50 border-none rounded-2xl text-sm font-bold text-gray-600 focus:ring-2 focus:ring-blue-500/20 outline-none">
+              <select
+                value={filters.grade}
+                onChange={(e) => setFilters({ ...filters, grade: e.target.value })}
+                className="px-4 py-3.5 bg-gray-50 border-none rounded-2xl text-sm font-bold text-gray-600 focus:ring-2 focus:ring-blue-500/20 outline-none"
+              >
                 <option value="">Tất cả khối</option>
                 <option value="Khối 6">Khối 6</option>
                 <option value="Khối 7">Khối 7</option>
@@ -220,18 +395,33 @@ export function QuestionBank() {
                 <option value="Khối 12">Khối 12</option>
                 <option value="Đại học">Đại học</option>
               </select>
-              <select value={filters.difficulty} onChange={(e) => setFilters({...filters, difficulty: e.target.value})} className="px-4 py-3.5 bg-gray-50 border-none rounded-2xl text-sm font-bold text-gray-600 focus:ring-2 focus:ring-blue-500/20 outline-none">
+              <select
+                value={filters.difficulty}
+                onChange={(e) => setFilters({ ...filters, difficulty: e.target.value })}
+                className="px-4 py-3.5 bg-gray-50 border-none rounded-2xl text-sm font-bold text-gray-600 focus:ring-2 focus:ring-blue-500/20 outline-none"
+              >
                 <option value="">Mọi độ khó</option>
                 <option value="Dễ">Dễ</option>
                 <option value="Trung bình">Trung bình</option>
                 <option value="Khó">Khó</option>
               </select>
-              <button 
-                type="button" 
-                onClick={() => setOnlyNeedsReview((prev) => !prev)} 
+              <select
+                value={filters.source}
+                onChange={(e) => setFilters({ ...filters, source: e.target.value })}
+                className="px-4 py-3.5 bg-gray-50 border-none rounded-2xl text-sm font-bold text-gray-600 focus:ring-2 focus:ring-blue-500/20 outline-none"
+              >
+                <option value="all">Tất cả</option>
+                <option value="">Của tôi</option>
+                <option value="common">Ngân hàng chung</option>
+              </select>
+              <button
+                type="button"
+                onClick={() => setOnlyNeedsReview((prev) => !prev)}
                 className={cn(
                   'inline-flex items-center gap-2 px-5 py-3.5 rounded-2xl font-bold text-sm transition-all',
-                  onlyNeedsReview ? 'bg-amber-500 text-white shadow-lg shadow-amber-200' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'
+                  onlyNeedsReview
+                    ? 'bg-amber-500 text-white shadow-lg shadow-amber-200'
+                    : 'bg-gray-50 text-gray-500 hover:bg-gray-100',
                 )}
               >
                 <AlertTriangle className="w-4 h-4" />
@@ -242,25 +432,99 @@ export function QuestionBank() {
         </div>
 
         {/* Questions Grid/List */}
+        {selectedIds.size > 0 && (
+          <div className="bg-blue-50 border-2 border-blue-200 p-4 rounded-2xl flex items-center justify-between sticky top-0 z-20">
+            <div className="flex items-center gap-4">
+              <input
+                type="checkbox"
+                checked={selectedIds.size === questions.length && questions.length > 0}
+                onChange={toggleSelectAll}
+                className="w-5 h-5 rounded cursor-pointer"
+              />
+              <span className="font-bold text-blue-700">
+                Đã chọn {selectedIds.size} / {questions.length} câu hỏi
+              </span>
+            </div>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setSelectedIds(new Set())}
+                className="px-4 py-2 text-gray-600 hover:bg-blue-100 font-bold rounded-xl transition-colors"
+              >
+                Bỏ chọn
+              </button>
+              <button
+                onClick={openBulkDeleteModal}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl flex items-center gap-2 transition-colors"
+              >
+                <Trash2 className="w-4 h-4" />
+                Xóa {selectedIds.size}
+              </button>
+            </div>
+          </div>
+        )}
+        
         <div className="grid grid-cols-1 gap-4">
           {questions.map((q) => (
-            <div key={q._id} className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm hover:shadow-md transition-all group relative overflow-hidden">
-              <div className="flex items-start gap-6">
+            <div
+              key={q._id}
+              className={cn(
+                'bg-white p-6 rounded-[32px] border-2 shadow-sm hover:shadow-md transition-all group relative overflow-hidden',
+                selectedIds.has(q._id) ? 'border-blue-500 bg-blue-50/30' : 'border-gray-100',
+              )}
+            >
+              <div className="flex items-start gap-4">
+                <input
+                  type="checkbox"
+                  checked={selectedIds.has(q._id)}
+                  onChange={() => toggleSelectQuestion(q._id)}
+                  className="w-5 h-5 rounded cursor-pointer mt-1 flex-shrink-0"
+                />
                 <div className="flex-1 min-w-0">
                   <div className="flex flex-wrap items-center gap-3 mb-4">
-                    <span className="px-3 py-1 bg-blue-50 text-blue-600 text-[10px] font-black uppercase tracking-widest rounded-lg">{q.subject}</span>
-                    <span className="px-3 py-1 bg-gray-50 text-gray-500 text-[10px] font-black uppercase tracking-widest rounded-lg">{q.grade}</span>
-                    <span className={cn(
-                      "px-3 py-1 text-[10px] font-black uppercase tracking-widest rounded-lg",
-                      q.difficulty === 'Dễ' ? "bg-emerald-50 text-emerald-600" : 
-                      q.difficulty === 'Trung bình' ? "bg-amber-50 text-amber-600" : 
-                      "bg-rose-50 text-rose-600"
-                    )}>{q.difficulty}</span>
-                    <span className="px-3 py-1 bg-indigo-50 text-indigo-600 text-[10px] font-black uppercase tracking-widest rounded-lg">{q.type}</span>
+                    <span className="px-3 py-1 bg-blue-50 text-blue-600 text-[10px] font-black uppercase tracking-widest rounded-lg">
+                      {q.subject}
+                    </span>
+                    <span className="px-3 py-1 bg-gray-50 text-gray-500 text-[10px] font-black uppercase tracking-widest rounded-lg">
+                      {q.grade}
+                    </span>
+                    <span
+                      className={cn(
+                        'px-3 py-1 text-[10px] font-black uppercase tracking-widest rounded-lg',
+                        q.difficulty === 'Dễ'
+                          ? 'bg-emerald-50 text-emerald-600'
+                          : q.difficulty === 'Trung bình'
+                            ? 'bg-amber-50 text-amber-600'
+                            : 'bg-rose-50 text-rose-600',
+                      )}
+                    >
+                      {q.difficulty}
+                    </span>
+                    <span className="px-3 py-1 bg-indigo-50 text-indigo-600 text-[10px] font-black uppercase tracking-widest rounded-lg">
+                      {q.type}
+                    </span>
+                    {q.isPublic && (
+                      <span className="px-3 py-1 bg-green-50 text-green-600 text-[10px] font-black uppercase tracking-widest rounded-lg flex items-center gap-1">
+                        <BookOpen className="w-3 h-3" /> Ngân hàng chung
+                      </span>
+                    )}
                   </div>
-                  
-                  <div className="text-gray-900 font-bold text-lg leading-relaxed mb-4 line-clamp-2">
-                    {q.content}
+
+                  <div className="space-y-3 mb-4">
+                    <div className="text-gray-900 font-bold text-lg leading-relaxed">
+                      {q.content}
+                    </div>
+                    {q.formula && (
+                      <div className="px-4 py-3 bg-blue-50 rounded-xl border border-blue-200">
+                        <div
+                          dangerouslySetInnerHTML={{
+                            __html: katex.renderToString(q.formula, {
+                              throwOnError: false,
+                              displayMode: true,
+                            }),
+                          }}
+                        />
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex items-center gap-4 text-xs font-bold text-gray-400">
@@ -287,23 +551,24 @@ export function QuestionBank() {
                 </div>
 
                 <div className="flex flex-col gap-2">
-                   <DropdownMenu question={q} onDelete={openDeleteModal} />
+                  <DropdownMenu
+                    question={q}
+                    onDelete={openDeleteModal}
+                    onTogglePublic={togglePublic}
+                  />
                 </div>
               </div>
             </div>
           ))}
         </div>
-        
+
         <div className="bg-white px-8 py-6 rounded-[32px] border border-gray-100 shadow-sm flex items-center justify-between">
           <p className="text-sm font-bold text-gray-400">
             Hiển thị <span className="text-gray-900">{questions.length}</span> câu hỏi
           </p>
-          <div className="flex gap-2">
-             {/* Pagination can be added here */}
-          </div>
+          <div className="flex gap-2">{/* Pagination can be added here */}</div>
         </div>
       </div>
     </>
   );
 }
-

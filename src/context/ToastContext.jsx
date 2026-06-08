@@ -59,26 +59,26 @@ export function ToastProvider({ children }) {
           const borderColor = isSuccess
             ? 'border-emerald-500'
             : isError
-            ? 'border-red-500'
-            : isWarning
-            ? 'border-amber-500'
-            : 'border-blue-500';
+              ? 'border-red-500'
+              : isWarning
+                ? 'border-amber-500'
+                : 'border-blue-500';
 
           const bgColor = isSuccess
             ? 'bg-emerald-50'
             : isError
-            ? 'bg-red-50'
-            : isWarning
-            ? 'bg-amber-50'
-            : 'bg-blue-50';
+              ? 'bg-red-50'
+              : isWarning
+                ? 'bg-amber-50'
+                : 'bg-blue-50';
 
           const textColor = isSuccess
             ? 'text-emerald-900'
             : isError
-            ? 'text-red-900'
-            : isWarning
-            ? 'text-amber-900'
-            : 'text-blue-900';
+              ? 'text-red-900'
+              : isWarning
+                ? 'text-amber-900'
+                : 'text-blue-900';
 
           return (
             <div
@@ -88,13 +88,9 @@ export function ToastProvider({ children }) {
               <div className="mt-0.5">{renderIcon(toast.type)}</div>
               <div className="flex-1">
                 {toast.title && (
-                  <p className="text-sm font-semibold leading-tight">
-                    {toast.title}
-                  </p>
+                  <p className="text-sm font-semibold leading-tight">{toast.title}</p>
                 )}
-                <p className="text-sm leading-snug">
-                  {toast.message}
-                </p>
+                <p className="text-sm leading-snug">{toast.message}</p>
               </div>
             </div>
           );
@@ -113,4 +109,3 @@ export function useToast() {
   }
   return ctx;
 }
-

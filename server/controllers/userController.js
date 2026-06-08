@@ -23,10 +23,10 @@ const getUsers = async (req, res) => {
         user.role === 'admin'
           ? 'Admin'
           : user.role === 'teacher'
-          ? 'Teacher'
-          : user.role === 'mod'
-          ? 'Mod'
-          : 'Student';
+            ? 'Teacher'
+            : user.role === 'mod'
+              ? 'Mod'
+              : 'Student';
 
       const roleColor =
         user.role === 'teacher' || user.role === 'admin' || user.role === 'mod'
@@ -40,7 +40,8 @@ const getUsers = async (req, res) => {
         role: roleLabel,
         roleColor,
         joinedDate: user.createdAt,
-        status: user.status === 'locked' ? 'Locked' : (user.status === 'pending' ? 'Pending' : 'Active'),
+        status:
+          user.status === 'locked' ? 'Locked' : user.status === 'pending' ? 'Pending' : 'Active',
         grade: user.grade || '',
         className: user.className || '',
         school: user.school || '',
@@ -186,7 +187,7 @@ const getTeacherStudents = async (req, res) => {
 
     // Add direct students assigned to the teacher
     if (Array.isArray(teacher.students)) {
-      teacher.students.forEach(id => {
+      teacher.students.forEach((id) => {
         if (id) classroomStudentIds.add(id.toString());
       });
     }
@@ -284,14 +285,9 @@ const createUser = async (req, res) => {
       className: className || '',
       school: school || '',
       department: department || '',
-      teachingGrades:
-        Array.isArray(teachingGrades) && teachingGrades.length
-          ? teachingGrades
-          : [],
+      teachingGrades: Array.isArray(teachingGrades) && teachingGrades.length ? teachingGrades : [],
       teachingClasses:
-        Array.isArray(teachingClasses) && teachingClasses.length
-          ? teachingClasses
-          : [],
+        Array.isArray(teachingClasses) && teachingClasses.length ? teachingClasses : [],
     });
 
     res.status(201).json({
@@ -302,10 +298,10 @@ const createUser = async (req, res) => {
         user.role === 'admin'
           ? 'Admin'
           : user.role === 'teacher'
-          ? 'Teacher'
-          : user.role === 'mod'
-          ? 'Mod'
-          : 'Student',
+            ? 'Teacher'
+            : user.role === 'mod'
+              ? 'Mod'
+              : 'Student',
       status: user.status === 'locked' ? 'Locked' : 'Active',
       grade: user.grade || '',
       className: user.className || '',
@@ -365,15 +361,11 @@ const updateUser = async (req, res) => {
     }
 
     if (teachingGrades !== undefined) {
-      user.teachingGrades = Array.isArray(teachingGrades)
-        ? teachingGrades
-        : [];
+      user.teachingGrades = Array.isArray(teachingGrades) ? teachingGrades : [];
     }
 
     if (teachingClasses !== undefined) {
-      user.teachingClasses = Array.isArray(teachingClasses)
-        ? teachingClasses
-        : [];
+      user.teachingClasses = Array.isArray(teachingClasses) ? teachingClasses : [];
     }
 
     if (req.body.status !== undefined) {

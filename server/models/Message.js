@@ -40,28 +40,37 @@ const messageSchema = new mongoose.Schema(
     },
     reactions: [
       {
-        emoji: { type: String, required: true },
-        user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-        createdAt: { type: Date, default: Date.now },
+        emoji: {
+          type: String,
+          required: true,
+        },
+        user: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'User',
+          required: true,
+        },
+        createdAt: {
+          type: Date,
+          default: Date.now,
+        },
       },
     ],
     status: {
       type: String,
-      enum: ['sent', 'delivered', 'seen'],
+      enum: ['sent', 'seen'],
       default: 'sent',
     },
     seenBy: [
       {
-        user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-        seenAt: { type: Date, default: Date.now },
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
       },
     ],
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 messageSchema.index({ classroom: 1, type: 1, createdAt: -1 });
 messageSchema.index({ classroom: 1, sender: 1, recipient: 1, type: 1, createdAt: -1 });
-messageSchema.index({ classroom: 1, pinned: 1 });
 
 module.exports = mongoose.model('Message', messageSchema);

@@ -18,7 +18,19 @@ const {
 const { protect, authorize } = require('../middleware/auth');
 const multer = require('multer');
 
-const upload = multer({ storage: multer.memoryStorage() });
+const allowedMimeTypes = new Set([
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'text/csv',
+]);
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    if (allowedMimeTypes.has(file.mimetype)) return cb(null, true);
+    return cb(new Error('Định dạng tệp không được hỗ trợ'), false);
+  },
+});
 
 router.get('/', protect, authorize('admin', 'teacher', 'student'), getClassrooms);
 router.get('/:id', protect, authorize('admin', 'teacher', 'student'), getClassroomById);
@@ -26,19 +38,19 @@ router.get('/code/:code', protect, authorize('student'), getClassroomByCode);
 router.post('/join', protect, authorize('student'), joinClassroom);
 router.post('/approve', protect, authorize('teacher', 'admin'), approveStudent);
 router.post('/remove-student', protect, authorize('teacher', 'admin'), removeStudent);
-router.post('/:id/import-students', protect, authorize('teacher', 'admin'), upload.single('file'), importStudentsToClassroom);
+router.post(
+  '/:id/import-students',
+  protect,
+  authorize('teacher', 'admin'),
+  upload.single('file'),
+  importStudentsToClassroom,
+);
 router.post('/', protect, authorize('admin', 'teacher'), createClassroom);
 router.put('/:id', protect, authorize('admin', 'teacher'), updateClassroom);
 router.patch('/:id', protect, authorize('admin', 'teacher'), updateClassroom);
 router.delete('/:id', protect, authorize('admin', 'teacher'), deleteClassroom);
 router.post('/:id/assign-students', protect, authorize('admin'), assignStudents);
 router.post('/:id/assign-teachers', protect, authorize('admin'), assignTeachers);
-router.post(
-  '/import',
-  protect,
-  authorize('admin'),
-  upload.single('file'),
-  importClasses,
-);
+router.post('/import', protect, authorize('admin'), upload.single('file'), importClasses);
 
 module.exports = router;

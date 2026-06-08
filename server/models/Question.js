@@ -4,16 +4,17 @@ const questionSchema = new mongoose.Schema(
   {
     content: {
       type: String,
-      required: true,
+      required: false, // Make optional for image-based questions
     },
+    contentImage: String, // URL/path to question image
     type: {
       type: String,
-      enum: ['Trắc nghiệm', 'Tự luận'],
+      enum: ['Trắc nghiệm', 'Tự luận', 'Đúng/Sai', 'Điền từ', 'Tương tác'],
       default: 'Trắc nghiệm',
     },
     difficulty: {
       type: String,
-      enum: ['Dễ', 'Trung bình', 'Khó'],
+      enum: ['Dễ', 'Trung bình', 'Khó', 'Nhận biết', 'Thông hiểu', 'Vận dụng', 'Vận dụng cao'],
       default: 'Trung bình',
     },
     subject: {
@@ -40,12 +41,29 @@ const questionSchema = new mongoose.Schema(
       {
         id: String,
         content: String,
+        contentImage: String, // URL/path to answer option image
         isCorrect: Boolean,
       },
     ],
+    interactive: {
+      kind: String,
+      data: mongoose.Schema.Types.Mixed,
+    },
     author: {
       type: String,
       default: 'Unknown',
+    },
+    authorId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+    },
+    isPublic: {
+      type: Boolean,
+      default: false,
+    },
+    isInQuestionBank: {
+      type: Boolean,
+      default: true,
     },
     needsReview: {
       type: Boolean,

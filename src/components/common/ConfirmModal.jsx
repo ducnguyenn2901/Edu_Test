@@ -16,24 +16,27 @@ export function ConfirmModal({ isOpen, onClose, onConfirm, title, message }) {
               <h3 className="text-lg font-bold text-gray-900">{title || 'Yêu cầu xác nhận'}</h3>
             </div>
           </div>
-          <button onClick={onClose} className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full">
+          <button
+            onClick={onClose}
+            className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full"
+          >
             <X className="w-5 h-5" />
           </button>
         </div>
-        
+
         <p className="mt-4 text-sm text-gray-600 leading-relaxed">
           {message || 'Bạn có chắc chắn muốn thực hiện hành động này?'}
         </p>
 
         <div className="mt-6 flex justify-end gap-3">
-          <button 
-            onClick={onClose} 
+          <button
+            onClick={onClose}
             className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
           >
             Hủy bỏ
           </button>
-          <button 
-            onClick={onConfirm} 
+          <button
+            onClick={onConfirm}
             className="px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
           >
             Xác nhận

@@ -26,9 +26,7 @@ export function SystemSettings() {
   }, []);
 
   const handleChange = (key, value) => {
-    setSettings((prev) =>
-      prev.map((s) => (s.key === key ? { ...s, value } : s)),
-    );
+    setSettings((prev) => prev.map((s) => (s.key === key ? { ...s, value } : s)));
   };
 
   const handleSubmit = async (e) => {
@@ -46,8 +44,7 @@ export function SystemSettings() {
       );
       setSuccess('Đã lưu cấu hình hệ thống.');
     } catch (err) {
-      const message =
-        err?.response?.data?.message || 'Không thể lưu cấu hình. Vui lòng thử lại.';
+      const message = err?.response?.data?.message || 'Không thể lưu cấu hình. Vui lòng thử lại.';
       setError(message);
     } finally {
       setSaving(false);
@@ -75,15 +72,9 @@ export function SystemSettings() {
         </div>
       </div>
 
-      {error && (
-        <div className="px-4 py-2 rounded-lg bg-red-50 text-red-700 text-sm">
-          {error}
-        </div>
-      )}
+      {error && <div className="px-4 py-2 rounded-lg bg-red-50 text-red-700 text-sm">{error}</div>}
       {success && (
-        <div className="px-4 py-2 rounded-lg bg-emerald-50 text-emerald-700 text-sm">
-          {success}
-        </div>
+        <div className="px-4 py-2 rounded-lg bg-emerald-50 text-emerald-700 text-sm">{success}</div>
       )}
 
       <form
@@ -92,9 +83,7 @@ export function SystemSettings() {
       >
         <div className="flex items-center gap-2 mb-2">
           <SettingsIcon className="w-5 h-5 text-blue-600" />
-          <h2 className="text-base font-semibold text-gray-900">
-            Thiết lập chung
-          </h2>
+          <h2 className="text-base font-semibold text-gray-900">Thiết lập chung</h2>
         </div>
 
         {settings.map((setting) => (
@@ -103,17 +92,15 @@ export function SystemSettings() {
               {setting.key === 'defaultExamDuration'
                 ? 'Thời lượng mặc định của bài thi (phút)'
                 : setting.key === 'defaultPassingScore'
-                ? 'Điểm đạt mặc định (trên thang 10)'
-                : setting.key === 'studentSelfRegistrationEnabled'
-                ? 'Cho phép học sinh tự đăng ký'
-                : setting.key}
+                  ? 'Điểm đạt mặc định (trên thang 10)'
+                  : setting.key === 'studentSelfRegistrationEnabled'
+                    ? 'Cho phép học sinh tự đăng ký'
+                    : setting.key}
             </label>
             {setting.key === 'studentSelfRegistrationEnabled' ? (
               <select
                 value={String(setting.value)}
-                onChange={(e) =>
-                  handleChange(setting.key, e.target.value === 'true')
-                }
+                onChange={(e) => handleChange(setting.key, e.target.value === 'true')}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white max-w-xs"
               >
                 <option value="true">Bật</option>
@@ -123,15 +110,11 @@ export function SystemSettings() {
               <input
                 type="number"
                 value={setting.value}
-                onChange={(e) =>
-                  handleChange(setting.key, Number(e.target.value) || 0)
-                }
+                onChange={(e) => handleChange(setting.key, Number(e.target.value) || 0)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none max-w-xs"
               />
             )}
-            {setting.description && (
-              <p className="text-xs text-gray-500">{setting.description}</p>
-            )}
+            {setting.description && <p className="text-xs text-gray-500">{setting.description}</p>}
           </div>
         ))}
 

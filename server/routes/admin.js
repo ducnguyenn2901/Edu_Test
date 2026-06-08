@@ -5,12 +5,7 @@ const { getSettings, updateSettings } = require('../controllers/settingControlle
 const { protect, authorize } = require('../middleware/auth');
 
 router.get('/stats', protect, authorize('admin'), getStats);
-router.get(
-  '/attempts/export',
-  protect,
-  authorize('admin'),
-  exportAttempts,
-);
+router.get('/attempts/export', protect, authorize('admin'), exportAttempts);
 router.get('/settings', protect, authorize('admin'), getSettings);
 router.put('/settings', protect, authorize('admin'), updateSettings);
 

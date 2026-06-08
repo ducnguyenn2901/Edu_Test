@@ -1,6 +1,7 @@
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
-const mongoose = require('mongoose');
+const crypto = require('crypto');
+const { OAuth2Client } = require('google-auth-library');
 
 // Generate JWT Token
 const generateToken = (id) => {
@@ -9,11 +10,52 @@ const generateToken = (id) => {
   });
 };
 
-// Middleware to check DB connection
-const checkDBConnection = () => {
-  if (mongoose.connection.readyState !== 1) {
-    throw new Error('Database connection is not ready. Please check your MongoDB configuration or IP whitelist.');
-  }
+const ACCESS_COOKIE_NAME = 'edutest_access';
+const CSRF_COOKIE_NAME = 'edutest_csrf';
+
+const baseCookieOptions = () => {
+  const isProd = process.env.NODE_ENV === 'production';
+  return {
+    secure: isProd,
+    sameSite: isProd ? 'none' : 'lax',
+    path: '/',
+  };
+};
+
+const setAuthCookies = (res, token) => {
+  const csrfToken = crypto.randomBytes(24).toString('hex');
+  const maxAgeMs = 30 * 24 * 60 * 60 * 1000;
+
+  res.cookie(ACCESS_COOKIE_NAME, token, {
+    ...baseCookieOptions(),
+    httpOnly: true,
+    maxAge: maxAgeMs,
+  });
+  res.cookie(CSRF_COOKIE_NAME, csrfToken, {
+    ...baseCookieOptions(),
+    httpOnly: false,
+    maxAge: maxAgeMs,
+  });
+};
+
+const clearAuthCookies = (res) => {
+  res.clearCookie(ACCESS_COOKIE_NAME, baseCookieOptions());
+  res.clearCookie(CSRF_COOKIE_NAME, baseCookieOptions());
+};
+
+const OAUTH_STATE_COOKIE_NAME = 'edutest_oauth_state';
+
+const roleRedirect = {
+  admin: '/admin',
+  student: '/student',
+  teacher: '/teacher',
+  mod: '/teacher',
+};
+
+const getFrontendUrl = () => {
+  const raw = process.env.FRONTEND_URL || '';
+  if (!raw) return '';
+  return raw.endsWith('/') ? raw.slice(0, -1) : raw;
 };
 
 // @desc    Register new user
@@ -21,7 +63,20 @@ const checkDBConnection = () => {
 // @access  Public
 exports.register = async (req, res) => {
   try {
-    const { name, email, password, role, grade, className, school, department, phone, address, dateOfBirth, gender } = req.body;
+    const {
+      name,
+      email,
+      password,
+      role,
+      grade,
+      className,
+      school,
+      department,
+      phone,
+      address,
+      dateOfBirth,
+      gender,
+    } = req.body;
 
     // 1. Kiểm tra email đã tồn tại chưa
     const userExists = await User.findOne({ email });
@@ -29,22 +84,9 @@ exports.register = async (req, res) => {
       return res.status(400).json({ message: 'Email đã được sử dụng' });
     }
 
-    // 2. Xác định Role (Logic gán Admin cho người đầu tiên)
-    let finalRole = 'student';
-    try {
-      const userCount = await User.countDocuments();
-      const allowedRoles = ['student', 'teacher'];
-      
-      if (userCount === 0) {
-        finalRole = 'admin';
-      } else {
-        finalRole = allowedRoles.includes(role) ? role : 'student';
-      }
-    } catch (countError) {
-      console.error('Lỗi khi đếm người dùng:', countError);
-      // Nếu lỗi khi đếm, mặc định là student cho an toàn
-      finalRole = 'student';
-    }
+    // 2. Xác định Role (không cho tự đăng ký admin)
+    const allowedRoles = ['student', 'teacher'];
+    const finalRole = allowedRoles.includes(role) ? role : 'student';
 
     // 3. Xác định trạng thái ban đầu
     let status = 'active';
@@ -84,17 +126,17 @@ exports.register = async (req, res) => {
       if (user.status === 'pending') {
         return res.status(201).json({
           message: 'Đăng ký thành công. Tài khoản giáo viên đang chờ quản trị viên phê duyệt.',
-          status: 'pending'
+          status: 'pending',
         });
       }
 
       const token = generateToken(user._id);
+      setAuthCookies(res, token);
       res.status(201).json({
         _id: user._id,
         name: user.name,
         email: user.email,
         role: user.role,
-        token: token,
         status: user.status,
       });
     } else {
@@ -102,9 +144,9 @@ exports.register = async (req, res) => {
     }
   } catch (error) {
     console.error('Lỗi đăng ký:', error);
-    res.status(500).json({ 
-      message: 'Đã có lỗi xảy ra trên server trong quá trình đăng ký', 
-      error: error.message 
+    res.status(500).json({
+      message: 'Đã có lỗi xảy ra trên server trong quá trình đăng ký',
+      error: error.message,
     });
   }
 };
@@ -124,23 +166,27 @@ exports.login = async (req, res) => {
     }
 
     if (user.status === 'locked') {
-      return res.status(403).json({ message: 'Tài khoản đã bị khóa, vui lòng liên hệ quản trị viên' });
+      return res
+        .status(403)
+        .json({ message: 'Tài khoản đã bị khóa, vui lòng liên hệ quản trị viên' });
     }
 
     if (user.status === 'pending') {
-      return res.status(403).json({ message: 'Tài khoản của bạn đang chờ quản trị viên phê duyệt.' });
+      return res
+        .status(403)
+        .json({ message: 'Tài khoản của bạn đang chờ quản trị viên phê duyệt.' });
     }
 
     const isMatch = await user.comparePassword(password);
 
     if (isMatch) {
       const token = generateToken(user._id);
+      setAuthCookies(res, token);
       res.json({
         _id: user._id,
         name: user.name,
         email: user.email,
         role: user.role,
-        token: token,
       });
     } else {
       res.status(401).json({ message: 'Email hoặc mật khẩu không chính xác' });
@@ -181,7 +227,7 @@ exports.updateProfile = async (req, res) => {
       user.address = req.body.address || user.address;
       user.dateOfBirth = req.body.dateOfBirth || user.dateOfBirth;
       user.gender = req.body.gender || user.gender;
-      
+
       // Additional fields based on role
       if (user.role === 'student') {
         user.grade = req.body.grade || user.grade;
@@ -211,6 +257,159 @@ exports.updateProfile = async (req, res) => {
     } else {
       res.status(404).json({ message: 'Không tìm thấy người dùng' });
     }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Logout user
+// @route   POST /api/auth/logout
+// @access  Private
+exports.logout = async (_req, res) => {
+  clearAuthCookies(res);
+  res.json({ message: 'Đăng xuất thành công' });
+};
+
+// @desc    Google OAuth start
+// @route   GET /api/auth/google
+// @access  Public
+exports.googleStart = async (_req, res) => {
+  const { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI } = process.env;
+  if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET || !GOOGLE_REDIRECT_URI) {
+    return res.status(500).json({ message: 'Thiếu cấu hình Google OAuth' });
+  }
+
+  const client = new OAuth2Client(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI);
+  const state = crypto.randomBytes(24).toString('hex');
+
+  res.cookie(OAUTH_STATE_COOKIE_NAME, state, {
+    ...baseCookieOptions(),
+    httpOnly: true,
+    maxAge: 10 * 60 * 1000,
+  });
+
+  const url = client.generateAuthUrl({
+    access_type: 'offline',
+    scope: ['openid', 'email', 'profile'],
+    prompt: 'consent',
+    state,
+  });
+
+  return res.redirect(url);
+};
+
+// @desc    Google OAuth callback
+// @route   GET /api/auth/google/callback
+// @access  Public
+exports.googleCallback = async (req, res) => {
+  try {
+    const { code, state } = req.query;
+    const savedState = req.cookies?.[OAUTH_STATE_COOKIE_NAME];
+    res.clearCookie(OAUTH_STATE_COOKIE_NAME, baseCookieOptions());
+
+    if (!code || !state || !savedState || state !== savedState) {
+      const frontendUrl = getFrontendUrl();
+      if (frontendUrl) return res.redirect(`${frontendUrl}/login?oauth=error`);
+      return res.status(400).json({ message: 'OAuth state không hợp lệ' });
+    }
+
+    const { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI } = process.env;
+    const client = new OAuth2Client(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI);
+    const { tokens } = await client.getToken(String(code));
+    if (!tokens?.id_token) {
+      const frontendUrl = getFrontendUrl();
+      if (frontendUrl) return res.redirect(`${frontendUrl}/login?oauth=error`);
+      return res.status(400).json({ message: 'Không lấy được token từ Google' });
+    }
+
+    const ticket = await client.verifyIdToken({
+      idToken: tokens.id_token,
+      audience: GOOGLE_CLIENT_ID,
+    });
+    const payload = ticket.getPayload();
+    const email = payload?.email;
+    const name = payload?.name || 'Google User';
+    const googleId = payload?.sub;
+    const avatarUrl = payload?.picture || '';
+
+    if (!email || !googleId) {
+      const frontendUrl = getFrontendUrl();
+      if (frontendUrl) return res.redirect(`${frontendUrl}/login?oauth=error`);
+      return res.status(400).json({ message: 'Thiếu thông tin tài khoản Google' });
+    }
+
+    let user = await User.findOne({ email });
+    if (!user) {
+      user = await User.create({
+        name,
+        email,
+        password: crypto.randomBytes(24).toString('hex'),
+        role: 'student',
+        status: 'active',
+        authProvider: 'google',
+        googleId,
+        avatarUrl,
+      });
+    } else {
+      if (user.status === 'locked') {
+        const frontendUrl = getFrontendUrl();
+        if (frontendUrl) return res.redirect(`${frontendUrl}/login?oauth=locked`);
+        return res.status(403).json({ message: 'Tài khoản đã bị khóa' });
+      }
+      if (user.status === 'pending') {
+        const frontendUrl = getFrontendUrl();
+        if (frontendUrl) return res.redirect(`${frontendUrl}/login?oauth=pending`);
+        return res.status(403).json({ message: 'Tài khoản đang chờ phê duyệt' });
+      }
+
+      const updates = {};
+      if (!user.googleId) updates.googleId = googleId;
+      if (!user.avatarUrl && avatarUrl) updates.avatarUrl = avatarUrl;
+      if (user.authProvider === 'local' && updates.googleId) updates.authProvider = 'google';
+      if (Object.keys(updates).length) {
+        user = await User.findByIdAndUpdate(user._id, updates, { new: true });
+      }
+    }
+
+    const token = generateToken(user._id);
+    setAuthCookies(res, token);
+
+    const frontendUrl = getFrontendUrl();
+    if (frontendUrl)
+      return res.redirect(`${frontendUrl}${roleRedirect[user.role] || '/'}?oauth=success`);
+    return res.json({ message: 'Đăng nhập Google thành công' });
+  } catch (error) {
+    const frontendUrl = getFrontendUrl();
+    if (frontendUrl) return res.redirect(`${frontendUrl}/login?oauth=error`);
+    return res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Get available subjects for teacher registration
+// @route   GET /api/auth/subjects
+// @access  Public
+exports.getSubjects = async (req, res) => {
+  try {
+    const subjects = [
+      'Toán',
+      'Lý',
+      'Hóa',
+      'Sinh',
+      'Tiếng Anh',
+      'Tiếng Việt',
+      'Lịch sử',
+      'Địa lý',
+      'Giáo dục công dân',
+      'Thể dục',
+      'Công nghệ',
+      'Tin học',
+      'Mỹ thuật',
+      'Âm nhạc',
+      'GDCD',
+      'Kinh tế',
+      'Pháp luật',
+    ];
+    res.json(subjects);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

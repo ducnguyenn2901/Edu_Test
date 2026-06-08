@@ -48,9 +48,7 @@ export function StudentExamResultDetail() {
   if (error || !exam || !attempt) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
-        <p className="text-sm text-red-500">
-          {error || 'Không tìm thấy dữ liệu bài làm.'}
-        </p>
+        <p className="text-sm text-red-500">{error || 'Không tìm thấy dữ liệu bài làm.'}</p>
         <button
           type="button"
           onClick={() => navigate('/student/results')}
@@ -97,9 +95,7 @@ export function StudentExamResultDetail() {
             <BookOpen className="w-5 h-5" />
           </div>
           <div>
-            <p className="text-xs font-semibold text-blue-600 uppercase">
-              Chi tiết bài làm
-            </p>
+            <p className="text-xs font-semibold text-blue-600 uppercase">Chi tiết bài làm</p>
             <h1 className="text-lg font-bold text-gray-900">{exam.title}</h1>
             <p className="text-xs text-gray-500">
               Môn {exam.subject} • {totalQuestions} câu hỏi
@@ -113,9 +109,7 @@ export function StudentExamResultDetail() {
           </div>
           <div className="text-xs text-gray-500">
             Nộp lúc{' '}
-            {attempt.submittedAt
-              ? new Date(attempt.submittedAt).toLocaleString('vi-VN')
-              : ''}
+            {attempt.submittedAt ? new Date(attempt.submittedAt).toLocaleString('vi-VN') : ''}
           </div>
         </div>
       </div>
@@ -126,10 +120,7 @@ export function StudentExamResultDetail() {
           const hasAnswered = !!chosen;
           const correctAnswer = q.answers.find((a) => a.isCorrect);
           const isCorrect =
-            hasAnswered &&
-            correctAnswer &&
-            correctAnswer.id &&
-            correctAnswer.id === chosen;
+            hasAnswered && correctAnswer && correctAnswer.id && correctAnswer.id === chosen;
 
           return (
             <div
@@ -145,9 +136,7 @@ export function StudentExamResultDetail() {
                     <span
                       className={cn(
                         'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold uppercase',
-                        isCorrect
-                          ? 'bg-emerald-50 text-emerald-700'
-                          : 'bg-red-50 text-red-700',
+                        isCorrect ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700',
                       )}
                     >
                       {isCorrect ? (
@@ -163,9 +152,7 @@ export function StudentExamResultDetail() {
                       )}
                     </span>
                   </div>
-                  <p className="text-sm font-medium text-gray-900">
-                    {q.content}
-                  </p>
+                  <p className="text-sm font-medium text-gray-900">{q.content}</p>
                 </div>
               </div>
 
@@ -182,8 +169,8 @@ export function StudentExamResultDetail() {
                         isAnsCorrect
                           ? 'border-emerald-500 bg-emerald-50'
                           : isChosen
-                          ? 'border-red-500 bg-red-50'
-                          : 'border-gray-200 bg-white',
+                            ? 'border-red-500 bg-red-50'
+                            : 'border-gray-200 bg-white',
                       )}
                     >
                       <div
@@ -192,8 +179,8 @@ export function StudentExamResultDetail() {
                           isAnsCorrect
                             ? 'bg-emerald-500 text-white'
                             : isChosen
-                            ? 'bg-red-500 text-white'
-                            : 'bg-gray-100 text-gray-600',
+                              ? 'bg-red-500 text-white'
+                              : 'bg-gray-100 text-gray-600',
                         )}
                       >
                         {ans.id}
@@ -201,14 +188,10 @@ export function StudentExamResultDetail() {
                       <div className="flex-1">
                         <p className="text-gray-800">{ans.text}</p>
                         {isAnsCorrect && (
-                          <p className="mt-1 text-[11px] text-emerald-700">
-                            Đáp án đúng
-                          </p>
+                          <p className="mt-1 text-[11px] text-emerald-700">Đáp án đúng</p>
                         )}
                         {isChosen && !isAnsCorrect && (
-                          <p className="mt-1 text-[11px] text-red-700">
-                            Bạn đã chọn
-                          </p>
+                          <p className="mt-1 text-[11px] text-red-700">Bạn đã chọn</p>
                         )}
                       </div>
                     </div>
@@ -218,10 +201,7 @@ export function StudentExamResultDetail() {
 
               {q.explanation && (
                 <div className="mt-2 p-3 rounded-lg bg-gray-50 border border-gray-100 text-xs text-gray-700">
-                  <span className="font-semibold text-gray-900">
-                    Giải thích:
-                  </span>{' '}
-                  {q.explanation}
+                  <span className="font-semibold text-gray-900">Giải thích:</span> {q.explanation}
                 </div>
               )}
             </div>
@@ -231,4 +211,3 @@ export function StudentExamResultDetail() {
     </div>
   );
 }
-

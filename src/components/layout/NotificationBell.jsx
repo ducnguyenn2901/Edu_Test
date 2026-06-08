@@ -36,16 +36,14 @@ export function NotificationBell() {
         setIsOpen(false);
       }
     }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   const handleMarkAsRead = async (id) => {
     try {
       await notificationApi.markAsRead(id);
-      setNotifications(prev => 
-        prev.map(n => n._id === id ? { ...n, isRead: true } : n)
-      );
+      setNotifications((prev) => prev.map((n) => (n._id === id ? { ...n, isRead: true } : n)));
     } catch (error) {
       console.error('Error marking notification as read:', error);
     }
@@ -54,7 +52,7 @@ export function NotificationBell() {
   const handleMarkAllAsRead = async () => {
     try {
       await notificationApi.markAllAsRead();
-      setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+      setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
     } catch (error) {
       console.error('Error marking all notifications as read:', error);
     }
@@ -63,26 +61,30 @@ export function NotificationBell() {
   const handleDeleteNotification = async (id) => {
     try {
       await notificationApi.delete(id);
-      setNotifications(prev => prev.filter(n => n._id !== id));
+      setNotifications((prev) => prev.filter((n) => n._id !== id));
     } catch (error) {
       console.error('Error deleting notification:', error);
     }
   };
 
-  const unreadCount = notifications.filter(n => !n.isRead).length;
+  const unreadCount = notifications.filter((n) => !n.isRead).length;
 
   const getNotificationIcon = (type) => {
-    switch(type) {
-      case 'student_request': return <Users className="w-4 h-4 text-blue-500" />;
-      case 'class_approved': return <Check className="w-4 h-4 text-emerald-500" />;
-      case 'warning': return <Settings className="w-4 h-4 text-amber-500" />;
-      default: return <Bell className="w-4 h-4 text-slate-400" />;
+    switch (type) {
+      case 'student_request':
+        return <Users className="w-4 h-4 text-blue-500" />;
+      case 'class_approved':
+        return <Check className="w-4 h-4 text-emerald-500" />;
+      case 'warning':
+        return <Settings className="w-4 h-4 text-amber-500" />;
+      default:
+        return <Bell className="w-4 h-4 text-slate-400" />;
     }
   };
 
   return (
     <div className="relative" ref={dropdownRef}>
-      <button 
+      <button
         onClick={() => setIsOpen(!isOpen)}
         className="p-3 text-slate-500 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-800 hover:text-brand rounded-2xl transition-all relative group shadow-soft hover:shadow-md border border-transparent hover:border-slate-100 dark:hover:border-slate-700"
       >
@@ -95,10 +97,12 @@ export function NotificationBell() {
       {isOpen && (
         <div className="absolute right-0 mt-2 top-full w-96 bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-100 dark:border-slate-800 overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-200">
           <div className="px-6 py-5 border-b border-slate-50 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50">
-            <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest">Thông báo</h3>
+            <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest">
+              Thông báo
+            </h3>
             <div className="flex items-center gap-4">
               {unreadCount > 0 && (
-                <button 
+                <button
                   onClick={handleMarkAllAsRead}
                   className="text-[10px] font-black text-brand uppercase tracking-tighter hover:underline"
                 >
@@ -115,29 +119,39 @@ export function NotificationBell() {
             {notifications.length > 0 ? (
               <div className="divide-y divide-slate-50 dark:divide-slate-800">
                 {notifications.map((notification) => (
-                  <div 
+                  <div
                     key={notification._id}
                     className={cn(
-                      "p-5 transition-all group/item relative",
-                      !notification.isRead ? "bg-brand/5 dark:bg-brand/10" : "hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                      'p-5 transition-all group/item relative',
+                      !notification.isRead
+                        ? 'bg-brand/5 dark:bg-brand/10'
+                        : 'hover:bg-slate-50 dark:hover:bg-slate-800/50',
                     )}
                   >
                     <div className="flex gap-4">
-                      <div className={cn(
-                        "w-10 h-10 rounded-xl flex items-center justify-center shrink-0",
-                        !notification.isRead ? "bg-white dark:bg-slate-800 shadow-sm" : "bg-slate-100 dark:bg-slate-900"
-                      )}>
+                      <div
+                        className={cn(
+                          'w-10 h-10 rounded-xl flex items-center justify-center shrink-0',
+                          !notification.isRead
+                            ? 'bg-white dark:bg-slate-800 shadow-sm'
+                            : 'bg-slate-100 dark:bg-slate-900',
+                        )}
+                      >
                         {getNotificationIcon(notification.type)}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2">
-                          <h4 className={cn(
-                            "text-sm tracking-tight line-clamp-1",
-                            !notification.isRead ? "font-black text-slate-900 dark:text-white" : "font-bold text-slate-600 dark:text-slate-400"
-                          )}>
+                          <h4
+                            className={cn(
+                              'text-sm tracking-tight line-clamp-1',
+                              !notification.isRead
+                                ? 'font-black text-slate-900 dark:text-white'
+                                : 'font-bold text-slate-600 dark:text-slate-400',
+                            )}
+                          >
                             {notification.title}
                           </h4>
-                          <button 
+                          <button
                             onClick={(e) => {
                               e.stopPropagation();
                               handleDeleteNotification(notification._id);
@@ -153,21 +167,25 @@ export function NotificationBell() {
                         <div className="flex items-center justify-between mt-3">
                           <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400">
                             <Clock className="w-3 h-3" />
-                            {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true, locale: vi })}
+                            {formatDistanceToNow(new Date(notification.createdAt), {
+                              addSuffix: true,
+                              locale: vi,
+                            })}
                           </div>
                           {!notification.isRead && (
-                            <button 
+                            <button
                               onClick={() => handleMarkAsRead(notification._id)}
                               className="text-[10px] font-black text-brand uppercase tracking-widest flex items-center gap-1 group/btn"
                             >
-                              Đã đọc <Check className="w-3 h-3 group-hover/btn:scale-110 transition-transform" />
+                              Đã đọc{' '}
+                              <Check className="w-3 h-3 group-hover/btn:scale-110 transition-transform" />
                             </button>
                           )}
                         </div>
                       </div>
                     </div>
                     {notification.link && (
-                      <Link 
+                      <Link
                         to={notification.link}
                         onClick={() => {
                           handleMarkAsRead(notification._id);
@@ -184,7 +202,9 @@ export function NotificationBell() {
                 <div className="w-16 h-16 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Bell className="w-8 h-8 text-slate-200 dark:text-slate-700" />
                 </div>
-                <p className="text-sm font-bold text-slate-400 dark:text-slate-600 uppercase tracking-widest">Không có thông báo nào</p>
+                <p className="text-sm font-bold text-slate-400 dark:text-slate-600 uppercase tracking-widest">
+                  Không có thông báo nào
+                </p>
               </div>
             )}
           </div>

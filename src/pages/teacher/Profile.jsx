@@ -1,5 +1,16 @@
 import React, { useState } from 'react';
-import { User, Mail, Phone, MapPin, Camera, Shield, Key, Bell, Loader2, CheckCircle2, X, Calendar, School } from 'lucide-react';
+import {
+  User,
+  Mail,
+  MapPin,
+  Camera,
+  Shield,
+  Key,
+  Bell,
+  Loader2,
+  CheckCircle2,
+  X,
+} from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { authApi } from '../../services/api';
 import { useToast } from '../../context/ToastContext.jsx';
@@ -9,16 +20,11 @@ export function TeacherProfile() {
   const { showToast } = useToast();
   const [loading, setLoading] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
-  
+
   const [formData, setFormData] = useState({
     name: user?.name || '',
     email: user?.email || '',
-    phone: user?.phone || '',
-    address: user?.address || '',
-    dateOfBirth: user?.dateOfBirth ? new Date(user.dateOfBirth).toISOString().split('T')[0] : '',
-    gender: user?.gender || '',
     school: user?.school || '',
-    department: user?.department || '',
   });
 
   const [passwordData, setPasswordData] = useState({
@@ -92,7 +98,7 @@ export function TeacherProfile() {
         <div className="md:col-span-1 space-y-6">
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 flex flex-col items-center text-center">
             <div className="relative mb-4">
-              <img 
+              <img
                 src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=random&size=128`}
                 alt={user.name}
                 className="w-32 h-32 rounded-full border-4 border-white shadow-lg"
@@ -128,100 +134,45 @@ export function TeacherProfile() {
         {/* Right Column: Details & Settings */}
         <div className="md:col-span-2 space-y-6">
           {/* Personal Info Form */}
-          <form onSubmit={handleUpdateProfile} className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+          <form
+            onSubmit={handleUpdateProfile}
+            className="bg-white rounded-xl border border-gray-200 shadow-sm p-6"
+          >
             <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
               <User className="w-5 h-5 text-blue-600" />
               Thông tin cơ bản
             </h3>
-            
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-1">
+              <div className="space-y-1 sm:col-span-2">
                 <label className="text-sm font-medium text-gray-700">Họ và tên</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   value={formData.name}
-                  onChange={(e) => setFormData({...formData, name: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
                 />
               </div>
-              <div className="space-y-1">
+              <div className="space-y-1 sm:col-span-2">
                 <label className="text-sm font-medium text-gray-700">Email</label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <input 
-                    type="email" 
+                  <input
+                    type="email"
                     value={formData.email}
-                    onChange={(e) => setFormData({...formData, email: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
                   />
                 </div>
-              </div>
-              <div className="space-y-1">
-                <label className="text-sm font-medium text-gray-700">Số điện thoại</label>
-                <div className="relative">
-                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <input 
-                    type="tel" 
-                    value={formData.phone}
-                    onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                    className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                  />
-                </div>
-              </div>
-              <div className="space-y-1">
-                <label className="text-sm font-medium text-gray-700">Ngày sinh</label>
-                <div className="relative">
-                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <input 
-                    type="date" 
-                    value={formData.dateOfBirth}
-                    onChange={(e) => setFormData({...formData, dateOfBirth: e.target.value})}
-                    className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                  />
-                </div>
-              </div>
-              <div className="space-y-1">
-                <label className="text-sm font-medium text-gray-700">Giới tính</label>
-                <select 
-                  value={formData.gender}
-                  onChange={(e) => setFormData({...formData, gender: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                >
-                  <option value="">Chọn giới tính</option>
-                  <option value="male">Nam</option>
-                  <option value="female">Nữ</option>
-                  <option value="other">Khác</option>
-                </select>
               </div>
               <div className="sm:col-span-2 space-y-1">
                 <label className="text-sm font-medium text-gray-700">Trường học</label>
                 <div className="relative">
-                  <School className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <input 
-                    type="text" 
-                    value={formData.school}
-                    onChange={(e) => setFormData({...formData, school: e.target.value})}
-                    className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                  />
-                </div>
-              </div>
-              <div className="sm:col-span-2 space-y-1">
-                <label className="text-sm font-medium text-gray-700">Tổ bộ môn</label>
-                <input 
-                  type="text" 
-                  value={formData.department}
-                  onChange={(e) => setFormData({...formData, department: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                />
-              </div>
-              <div className="sm:col-span-2 space-y-1">
-                <label className="text-sm font-medium text-gray-700">Địa chỉ</label>
-                <div className="relative">
                   <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <input 
-                    type="text" 
-                    value={formData.address}
-                    onChange={(e) => setFormData({...formData, address: e.target.value})}
+                  <input
+                    type="text"
+                    value={formData.school}
+                    onChange={(e) => setFormData({ ...formData, school: e.target.value })}
                     className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
                   />
                 </div>
@@ -229,7 +180,7 @@ export function TeacherProfile() {
             </div>
 
             <div className="mt-6 flex justify-end">
-              <button 
+              <button
                 type="submit"
                 disabled={loading}
                 className="px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors shadow-sm disabled:opacity-50 flex items-center gap-2"
@@ -242,13 +193,13 @@ export function TeacherProfile() {
 
           {/* Account Settings */}
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-             <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
               <Shield className="w-5 h-5 text-blue-600" />
               Bảo mật & Cài đặt
             </h3>
-            
+
             <div className="space-y-4">
-              <div 
+              <div
                 onClick={() => setShowPasswordModal(true)}
                 className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
               >
@@ -258,7 +209,9 @@ export function TeacherProfile() {
                   </div>
                   <div>
                     <p className="font-medium text-gray-900">Đổi mật khẩu</p>
-                    <p className="text-xs text-gray-500">Cập nhật mật khẩu định kỳ để bảo vệ tài khoản</p>
+                    <p className="text-xs text-gray-500">
+                      Cập nhật mật khẩu định kỳ để bảo vệ tài khoản
+                    </p>
                   </div>
                 </div>
               </div>
@@ -285,56 +238,62 @@ export function TeacherProfile() {
           <div className="bg-white rounded-2xl max-w-md w-full shadow-xl">
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
               <h2 className="text-lg font-semibold text-gray-900">Đổi mật khẩu</h2>
-              <button 
+              <button
                 onClick={() => setShowPasswordModal(false)}
                 className="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
-            
+
             <form onSubmit={handleChangePassword} className="p-6 space-y-4">
               <div className="space-y-1">
                 <label className="text-sm font-medium text-gray-700">Mật khẩu hiện tại</label>
-                <input 
-                  type="password" 
+                <input
+                  type="password"
                   required
                   value={passwordData.currentPassword}
-                  onChange={(e) => setPasswordData({...passwordData, currentPassword: e.target.value})}
+                  onChange={(e) =>
+                    setPasswordData({ ...passwordData, currentPassword: e.target.value })
+                  }
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                 />
               </div>
               <div className="space-y-1">
                 <label className="text-sm font-medium text-gray-700">Mật khẩu mới</label>
-                <input 
-                  type="password" 
+                <input
+                  type="password"
                   required
                   minLength={6}
                   value={passwordData.newPassword}
-                  onChange={(e) => setPasswordData({...passwordData, newPassword: e.target.value})}
+                  onChange={(e) =>
+                    setPasswordData({ ...passwordData, newPassword: e.target.value })
+                  }
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                 />
               </div>
               <div className="space-y-1">
                 <label className="text-sm font-medium text-gray-700">Xác nhận mật khẩu mới</label>
-                <input 
-                  type="password" 
+                <input
+                  type="password"
                   required
                   value={passwordData.confirmPassword}
-                  onChange={(e) => setPasswordData({...passwordData, confirmPassword: e.target.value})}
+                  onChange={(e) =>
+                    setPasswordData({ ...passwordData, confirmPassword: e.target.value })
+                  }
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                 />
               </div>
-              
+
               <div className="pt-4 flex gap-3">
-                <button 
+                <button
                   type="button"
                   onClick={() => setShowPasswordModal(false)}
                   className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
                 >
                   Hủy
                 </button>
-                <button 
+                <button
                   type="submit"
                   disabled={loading}
                   className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors shadow-sm disabled:opacity-50 flex items-center justify-center gap-2"
